@@ -3,6 +3,8 @@
 set -Eeuo pipefail
 umask 077
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+# shellcheck source=tests/ssh-readiness.sh
+source "$PROJECT_DIR/tests/ssh-readiness.sh"
 if [[ ${1:-} == --help || ${1:-} == -h ]]; then
     printf 'Usage: ./tests/smoke-test.sh IMAGE.qcow2 [--accel auto|kvm|tcg] [--release-check]\nRelease checks additionally require guest Internet/NTP access and test reboot.\n'; exit 0
 fi
@@ -78,8 +80,8 @@ cleanup() {
     if (( status != 0 )); then
         # Keep only serial diagnostics in an ignored folder, never the seed/key.
         local diagnostics
-        diagnostics="$PROJECT_DIR/output/smoke-failure-$(date -u +%Y%m%dT%H%M%SZ)-$$"
-        if [[ ! -L $PROJECT_DIR/output ]] && mkdir -p "$diagnostics" 2>/dev/null; then
+        diagnostics="$PROJECT_DIR/smoke-diagnostics/failure-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+        if [[ ! -L $PROJECT_DIR/smoke-diagnostics ]] && mkdir -p "$diagnostics" 2>/dev/null; then
             cp "$work"/*.log "$diagnostics/" 2>/dev/null || true
             printf 'Smoke failed. Serial diagnostics: %s\n' "$diagnostics" >&2
         else
@@ -87,6 +89,11 @@ cleanup() {
             cp "$work"/*.log "$diagnostics/" 2>/dev/null || true
             printf 'Smoke failed. Serial diagnostics: %s\n' "$diagnostics" >&2
         fi
+        for log in "$work"/*.log; do
+            [[ -f $log ]] || continue
+            printf 'Last 100 lines: %s\n' "${log##*/}" >&2
+            tail -n 100 "$log" >&2 || true
+        done
     fi
     rm -rf -- "$work"
     local after
@@ -144,7 +151,7 @@ PY
         (( SECONDS < deadline )) || { echo 'Timed out waiting for SSH.' >&2; exit 1; }
         sleep 2
     done
-    timeout 600 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cloud-init status --wait --long'
+    wait_for_cloud_init "$pid" 600 ssh "${ssh_opts[@]}" debian@127.0.0.1
     timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
     python3 "$PROJECT_DIR/tests/qga-check.py" "$work/$instance-qga.sock"
     if [[ $instance == b ]]; then

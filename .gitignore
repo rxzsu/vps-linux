@@ -51,3 +51,6 @@ __pycache__/
 
 # Staged downloadable CI bundle
 /ci-artifacts/
+
+# Smoke diagnostics (runner-writable even when output is root-owned)
+/smoke-diagnostics/

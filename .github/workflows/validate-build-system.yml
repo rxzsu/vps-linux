@@ -131,6 +131,7 @@ jobs:
             output/*/SHA256SUMS
             output/*/*.sha256
             output/smoke-failure-*/*.log
+            smoke-diagnostics/**/*.log
           if-no-files-found: ignore
 
   publish:

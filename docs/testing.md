@@ -132,3 +132,12 @@ A separate job with contents:write starts only after the complete build/boot/onl
 The tag is created explicitly at the tested source commit with no force update. Existing tags/releases stop publication. Assets first upload to a draft, the uploaded QCOW2/sidecar are downloaded and SHA256-checked again, then the draft becomes public. Release assets include QCOW2, sidecar, SHA256SUMS, build.json, packages.tsv, SPDX SBOM, Sigstore bundle and an acceptance record pointing to the run. Build-time metadata is not rewritten after testing.
 
 Only the publication job has repository write permission. It uses GitHub's built-in token; no personal token or private signing key is stored. No tag/release is created merely by pushing this workflow. Already-running workflows keep their original code/inputs; start a new manual run to use the option. If upload/verification fails after tag/draft creation, inspect that state before retrying; the workflow never deletes, retags or overwrites existing release assets. Publication's policy/API-error paths are locally unit-tested; an end-to-end public GitHub publication has not been executed by the cloud agent.
+
+### CI SSH startup failures
+
+The read-only cloud-init readiness query retries SSH transport failures (exit 255)
+within a shared 600-second deadline. Actual cloud-init failures and timeouts
+still fail the build; functional checks are not retried. On failure, serial/QEMU
+log tails are printed in the job and logs are retained under `smoke-diagnostics/`
+in the metadata artifact, even when the image output directory is root-owned.
+After a fix, use **Run workflow** on `main`: re-running an old run uses its old commit.
