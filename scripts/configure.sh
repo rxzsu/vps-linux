@@ -45,7 +45,7 @@ systemctl --root="$root" enable systemd-networkd.service systemd-resolved.servic
 systemctl --root="$root" enable cloud-init-main.service cloud-init-local.service cloud-init-network.service cloud-config.service cloud-final.service
 # dpkg-query owns these format variables.
 # shellcheck disable=SC2016
-chroot "$root" dpkg-query -W '-f=${binary:Package}\t${Version}\n' > "$root/usr/share/vps-linux/packages.tsv"
+chroot "$root" dpkg-query -W '-f=${binary:Package}\t${Version}\t${Architecture}\n' > "$root/usr/share/vps-linux/packages.tsv"
 cp "$root/usr/share/vps-linux/packages.tsv" "$VPS_LINUX_WORK/release/packages.tsv"
 printf 'VPS Linux v%s\nDebian-based server image\n' "$VPS_LINUX_VERSION" > "$root/etc/issue"
 printf '%s\n' "$VPS_LINUX_VERSION" > "$root/usr/share/vps-linux/version"

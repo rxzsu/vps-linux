@@ -7,6 +7,7 @@
 set -Eeuo pipefail
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 [[ $# -ge 1 ]] || { echo 'Usage: verify-release.sh BUNDLE_DIR [--minisign-pubkey FILE] [--cosign-bundle FILE]' >&2; exit 1; }
+[[ -d $1 && ! -L $1 ]] || { echo 'Bundle must be a real directory.' >&2; exit 1; }
 bundle=$(realpath -e -- "$1")
 shift
 minisign_key=''
@@ -19,29 +20,7 @@ while (( $# )); do
     esac
 done
 [[ -d $bundle && ! -L $bundle ]] || { echo 'Bundle must be a real directory.' >&2; exit 1; }
-for file in SHA256SUMS sbom.spdx.json build.json packages.tsv; do
-    [[ -f $bundle/$file && ! -L $bundle/$file ]] || { echo "Missing bundle file: $file" >&2; exit 1; }
-done
-(cd "$bundle" && sha256sum -c SHA256SUMS)
-python3 - "$bundle" "$PROJECT_DIR" <<'PY'
-import json, pathlib, sys
-bundle = pathlib.Path(sys.argv[1])
-metadata = json.loads((bundle / 'build.json').read_text())
-sbom = json.loads((bundle / 'sbom.spdx.json').read_text())
-if sbom.get('spdxVersion') != 'SPDX-2.3':
-    sys.exit('SBOM is not SPDX 2.3')
-if not sbom.get('packages'):
-    sys.exit('SBOM lists no packages')
-image = bundle / f"vps-linux-v{metadata['version']}.qcow2"
-if not image.is_file():
-    sys.exit(f"Image missing: {image.name}")
-if metadata['image_sha256'] not in (bundle / (image.name + '.sha256')).read_text():
-    sys.exit('build.json image hash does not match the checksum file')
-rows = [line for line in (bundle / 'packages.tsv').read_text().splitlines() if line]
-if len(rows) != len(sbom['packages']):
-    sys.exit(f"SBOM package count {len(sbom['packages'])} != manifest {len(rows)}")
-print(f"SBOM/checksum metadata OK: {len(rows)} packages, image {image.name}")
-PY
+image=$(python3 "$PROJECT_DIR/scripts/verify-bundle.py" "$bundle")
 if [[ -n $minisign_key ]]; then
     command -v minisign >/dev/null || { echo 'minisign is required for --minisign-pubkey.' >&2; exit 1; }
     minisign -Vm "$bundle/SHA256SUMS" -p "$minisign_key"
@@ -56,4 +35,7 @@ fi
 if [[ -z $minisign_key && -z $cosign_bundle ]]; then
     echo 'No signature supplied; checksums and SBOM were verified without a trust root.' >&2
 fi
+command -v qemu-img >/dev/null || { echo 'qemu-img is required to verify image structure.' >&2; exit 1; }
+qemu-img info --output=json "$image" | python3 "$PROJECT_DIR/scripts/check-image.py"
+qemu-img check -f qcow2 "$image"
 printf 'Verified bundle: %s\n' "$bundle"

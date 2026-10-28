@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: sudo apt-get update && sudo apt-get install -y shellcheck python3-yaml gnupg
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck python3-yaml gnupg qemu-utils minisign
       - run: ./tests/static-checks.sh
   build-and-boot:
     if: github.event_name == 'workflow_dispatch' && inputs.build_and_boot
@@ -61,6 +61,16 @@ jobs:
             --bundle artifacts/SHA256SUMS.sigstore.json \
             --certificate-identity-regexp '^https://github\.com/rxzsu/vps-linux/\.github/workflows/validate-build-system\.yml@refs/' \
             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          cp artifacts/SHA256SUMS artifacts/tampered-checksums
+          printf '\n' >> artifacts/tampered-checksums
+          if cosign verify-blob artifacts/tampered-checksums \
+            --bundle artifacts/SHA256SUMS.sigstore.json \
+            --certificate-identity-regexp '^https://github\.com/rxzsu/vps-linux/\.github/workflows/validate-build-system\.yml@refs/' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'; then
+            echo 'ERROR: keyless verification accepted changed manifest bytes' >&2
+            exit 1
+          fi
+          rm artifacts/tampered-checksums
       - name: Retain metadata, SBOM and signature (never images or keys)
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
