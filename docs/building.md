@@ -15,7 +15,7 @@ sudo apt-get update
 sudo apt-get install -y \
   mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf \
   cloud-image-utils busybox-static gnupg dosfstools e2fsprogs \
-  python3 python3-yaml shellcheck git util-linux
+  python3 python3-yaml shellcheck minisign git util-linux
 ```
 
 Debian 13 uses the same package names. A readable installed host kernel is required by libguestfs/supermin. Run `sudo libguestfs-test-tool` if its appliance cannot start. KVM is optional; libguestfs and the test runner can use software emulation, which is slower. Secure Boot must be off for this initial unsigned GRUB build.
@@ -23,7 +23,7 @@ Debian 13 uses the same package names. A readable installed host kernel is requi
 ## Build
 
 ```sh
-git switch main
+git switch feature/v0.3-operations
 ./tests/static-checks.sh
 sudo ./build.sh --check
 mkdir -p output

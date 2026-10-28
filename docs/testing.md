@@ -6,7 +6,7 @@
 ./tests/static-checks.sh
 ```
 
-Bash syntax, ShellCheck, 22 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
+Bash syntax, ShellCheck, 36 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG, qemu-utils, minisign and apt-config. Integrity tests use real sparse QCOW2 files and ephemeral minisign keys; they do not boot VMs. These tests do not prove an image boots.
 
 ## Automated acceptance test
 
@@ -31,11 +31,11 @@ Assertions:
 - effective SSH password/keyboard-interactive/root denial and a rejected root login;
 - Docker daemon, overlay2, cgroups v2, both Compose V2 interfaces, `json-file` logging with `10m`/3-file rotation and `live-restore`;
 - journald limits (`SystemMaxUse=200M`), enabled `apt-daily` timers and security-only unattended upgrades without automatic reboot;
-- active `qemu-guest-agent` through an explicitly attached virtio-serial port;
+- active `qemu-guest-agent` and a successful read-only `guest-ping` through an explicitly attached virtio-serial port;
 - **real offline container execution** by importing the host's trusted static BusyBox binary into the disposable guest; no external image registry needed;
 - 1 GiB ZRAM, LZ4, swap priority 100;
 - resolved/networkd/timesyncd active and no failed systemd units;
-- instance B starts from a 10 GiB overlay and must grow its GPT root partition and ext4 filesystem beyond 9 GiB;
+- instance B starts from a 10 GiB overlay and must grow its GPT root partition and ext4 filesystem beyond 9 GiB; primary/backup GPT locations and header CRCs are checked;
 - fresh valid machine-id and ed25519/ECDSA host keys, distinct IDs/ed25519 and ECDSA fingerprints between two instances.
 
 The default test checks NTP **service activity**, not actual time synchronization. External registry pulls and NTP synchronization are **not run** by the offline suite. For release validation on an Internet-connected Zorin host, additionally check `timedatectl show -p NTPSynchronized --value` equals `yes`, `sudo docker run --rm hello-world`, and an HTTP container workload. Keep these outcomes separate.
@@ -96,3 +96,18 @@ The manual path uses your own normal SSH host-key verification. An old known-hos
 This opt-in mode needs guest Internet access to NTP servers and Docker Hub. It runs the offline checks on both disposable instances, and additionally on instance A waits for actual NTP synchronization, pulls/runs hello-world and nginx, verifies HTTP, reboots the guest, waits for a changed boot ID, reruns functional/security checks and checks that machine-id and both SSH host keys persist. It then checks the HTTP container restarts, NTP resynchronizes and no systemd units fail. All phases have bounded timeouts; network failures fail the check rather than being marked passed. The backing image remains unchanged.
 
 The extended VM mode has not been executed in the managed authoring environment. The owner reported a successful local build on Zorin and a passing extended run covering actual NTP synchronization, Docker Hub pulls, an HTTP workload, reboot with persistent identities and no failed units. The offline two-instance smoke checks also passed. These results are owner-reported; the managed cloud environment did not boot the image. See [validation status](validation.md).
+
+## One-command v0.3 local build and acceptance
+
+On the Zorin/Noble host prepared for v0.2, install the additional integrity-test tools and run:
+
+```sh
+sudo apt-get install -y minisign shellcheck python3-yaml
+./tests/v0.3-check.sh
+```
+
+For a new host, install all prerequisites in [building.md](building.md) first. The wrapper requires sudo, validates the host, runs all static/integrity tests, creates an **ephemeral unencrypted test-only minisign key outside the checkout**, builds 0.3-dev with a signature, verifies the complete bundle and signature, and runs the extended two-instance VM harness (including guest-ping, effective APT policy, effective container log rotation, disk growth/GPT checks, online tests and reboot). No manual VM setup is required. It prints the exact acceptance JSON path on success. Existing v0.1/v0.2 artifacts are not modified.
+
+The private test key is deleted by the exit trap; only its public key and the acceptance report are retained in ignored output/. A test key is **not** a production release trust root and these artifacts are not published. SIGKILL cannot execute traps; remove only the specific abandoned temporary directory after confirming no build uses it. Keyless cosign verification still requires the GitHub Actions OIDC workflow; a local minisign pass is not a keyless pass.
+
+The bundle verifier requires every mandatory artifact to be covered by SHA256SUMS, hashes the actual bytes, checks metadata and the exact SBOM package identities/versions/architectures, verifies an optional signature, then checks the QCOW2 structure. It rejects omitted files, traversal/duplicate checksum entries, symlinks, unrelated same-count SBOMs, mismatched metadata, fake QCOW2 payloads, modified signatures and wrong trust keys. The SPDX namespace hashes the document content rather than only the source revision. New package manifests include binary name, version and architecture; old two-column input remains readable without inventing an unknown architecture.

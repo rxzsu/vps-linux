@@ -146,10 +146,18 @@ PY
     done
     timeout 600 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cloud-init status --wait --long'
     timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
+    python3 "$PROJECT_DIR/tests/qga-check.py" "$work/$instance-qga.sock"
     if [[ $instance == b ]]; then
         timeout 120 ssh "${ssh_opts[@]}" debian@127.0.0.1 'bash -s' < "$PROJECT_DIR/tests/verify-disk-growth.sh"
     fi
     timeout 60 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n docker import - vps-linux-smoke' < "$work/container.tar"
+    timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'bash -s' <<'GUEST_LOG_CHECK'
+set -euo pipefail
+container=$(sudo -n docker create --network=none vps-linux-smoke /busybox true)
+trap 'sudo -n docker rm "$container" >/dev/null' EXIT
+sudo -n docker inspect -f '{{json .HostConfig.LogConfig}}' "$container" | python3 -c 'import json,sys; config=json.load(sys.stdin); assert config["Type"]=="json-file"; assert config["Config"]["max-size"]=="10m"; assert config["Config"]["max-file"]=="3"'
+echo 'Effective container log driver and rotation: passed'
+GUEST_LOG_CHECK
     [[ $(timeout 60 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n docker run --rm --network=none vps-linux-smoke /busybox echo vps-linux-container-ok') == vps-linux-container-ok ]]
     timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /etc/machine-id' > "$work/$instance-machine-id"
     for kind in ed25519 ecdsa; do

@@ -26,3 +26,25 @@ if (( disk_bytes < minimum )); then
 fi
 printf 'Disk growth: disk=%s partition=%s filesystem=%s bytes\n' \
     "$disk_bytes" "$partition_bytes" "$filesystem_bytes"
+
+sector_bytes=$(sudo -n blockdev --getss "/dev/$parent_name")
+sudo -n /usr/bin/python3 - "/dev/$parent_name" "$disk_bytes" "$sector_bytes" <<'PY_GPT'
+import struct, sys, zlib
+path, size, sector = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+last_lba = size // sector - 1
+with open(path, 'rb') as disk:
+    headers = []
+    for location in (1, last_lba):
+        disk.seek(location * sector)
+        header = bytearray(disk.read(sector))
+        assert header[:8] == b'EFI PART', 'Missing GPT header at current disk boundary'
+        length, crc = struct.unpack_from('<II', header, 12)
+        assert 92 <= length <= sector, 'Invalid GPT header length'
+        struct.pack_into('<I', header, 16, 0)
+        assert zlib.crc32(header[:length]) == crc, 'GPT header CRC mismatch'
+        current, alternate = struct.unpack_from('<QQ', header, 24)
+        assert current == location, 'GPT header is at the wrong LBA'
+        headers.append((current, alternate))
+assert headers == [(1, last_lba), (last_lba, 1)], 'GPT backup was not relocated'
+print('Primary and backup GPT headers/CRCs match the expanded disk boundaries')
+PY_GPT
