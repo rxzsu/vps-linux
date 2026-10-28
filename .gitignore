@@ -60,3 +60,5 @@ __pycache__/
 
 # Rust utility build output
 /vpsctl/target/
+
+/vpsctl/dist/

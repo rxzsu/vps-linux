@@ -12,7 +12,7 @@ const LIMIT: u64 = 262_144;
 
 // Never invoke a shell, search PATH, elevate privileges, or return raw stderr.
 // GNU timeout also kills stuck helper processes; output is capped per stream.
-fn probe(program: &str, args: &[&str]) -> Option<String> {
+pub(crate) fn probe(program: &str, args: &[&str]) -> Option<String> {
     let mut child = Command::new("/usr/bin/timeout")
         .args(["--kill-after=1s", "4s", program])
         .args(args)
@@ -20,22 +20,34 @@ fn probe(program: &str, args: &[&str]) -> Option<String> {
         .env("PATH", "/usr/sbin:/usr/bin:/sbin:/bin")
         .env_remove("DBUS_SYSTEM_BUS_ADDRESS")
         .env_remove("SYSTEMD_BUS_ADDRESS")
+        .env_remove("APT_CONFIG")
         .env("SYSTEMD_PAGER", "")
         .env("SYSTEMD_COLORS", "0")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .spawn()
         .ok()?;
+    let errors = child.stderr.take()?;
+    let errors = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        errors
+            .take(LIMIT + 1)
+            .read_to_end(&mut bytes)
+            .map(|_| bytes)
+    });
     let mut bytes = Vec::new();
     let result = child.stdout.take()?.take(LIMIT + 1).read_to_end(&mut bytes);
     if result.is_err() || bytes.len() as u64 > LIMIT {
         let _ = child.kill();
         let _ = child.wait();
+        let _ = errors.join();
         return None;
     }
     let status = child.wait().ok()?;
-    if !status.success() || bytes.len() as u64 > LIMIT {
+    let errors = errors.join().ok()?.ok()?;
+    // Warnings can mean incomplete configuration (notably apt-config).
+    if !status.success() || !errors.is_empty() || bytes.len() as u64 > LIMIT {
         return None;
     }
     String::from_utf8(bytes).ok()
@@ -185,7 +197,7 @@ pub fn info() -> Info {
     }
 }
 
-fn check(id: &'static str, level: Level, summary: impl Into<String>) -> Check {
+pub(crate) fn check(id: &'static str, level: Level, summary: impl Into<String>) -> Check {
     Check {
         id,
         level,
@@ -311,40 +323,6 @@ pub fn ssh_policy(text: Option<&str>) -> Vec<Check> {
             }
         })
         .collect()
-}
-
-pub fn security() -> Report {
-    let ssh = probe("/usr/sbin/sshd", &["-T"]);
-    let mut checks = ssh_policy(ssh.as_deref());
-    checks.push(check("ssh_match_context", Level::Unknown, "Per-user/address Match policies are not evaluated; default-context checks do not cover every SSH login"));
-    // List rules read-only, never dump firewall addresses/rules into the report.
-    let nft = probe("/usr/sbin/nft", &["-j", "list", "ruleset"])
-        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok());
-    checks.push(check(
-        "firewall",
-        Level::Unknown,
-        if nft.is_some() {
-            "nftables readable; effective ingress policy not evaluated"
-        } else {
-            "Firewall policy unavailable (permissions, missing nft or unsupported backend)"
-        },
-    ));
-    for timer in ["apt-daily.timer", "apt-daily-upgrade.timer"] {
-        let state = probe(
-            "/usr/bin/systemctl",
-            &["show", "--property=ActiveState", "--value", timer],
-        );
-        checks.push(check(
-            timer,
-            classify_unit(state.as_deref()),
-            "Timer activity only; package freshness and effective upgrade origins are not verified",
-        ));
-    }
-    Report {
-        schema_version: 1,
-        section: "security",
-        checks,
-    }
 }
 
 #[cfg(test)]

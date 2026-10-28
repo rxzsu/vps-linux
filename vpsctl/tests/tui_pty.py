@@ -32,6 +32,8 @@ class Terminal(unittest.TestCase):
             wait_for(b'hostname')
             os.write(master, b'\t')
             wait_for(b'utility_version')
+            os.write(master, b'\t\t\t')
+            wait_for(b'Local addresses only')
             os.write(master, b'r')
             fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 24, 80, 0, 0))
             os.write(master, quit_key)

@@ -1,106 +1,151 @@
-# vpsctl 0.1.0
+# vpsctl 0.2.0
 
-A first-party, read-only control center for VPS Linux. Rust 2024, MSRV **1.99.0**,
-Linux x86_64 / Debian 13. This utility has its own version; it is not yet included
-in the VPS Linux image. The v0.3 image pipeline and existing releases are unchanged.
+A first-party, read-only VPS Linux control center. Rust 2024, MSRV **1.99.0**,
+Linux x86_64 / Debian 13. Utility versioning is separate from the image.
+It is not yet included in image builds; the v0.3 pipeline/releases are unchanged.
 
-## Build and install
+## Build, install and package
 
-Install Rust with rustup from https://rustup.rs, then from this directory:
+Install Rust with rustup from https://rustup.rs. From `vpsctl/`:
 
 ```sh
 rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
 cargo +1.99.0 build --locked --release
 ./target/release/vpsctl --help
-# Optional, explicit system-wide installation:
+# Explicit optional installation:
 sudo install -m 0755 target/release/vpsctl /usr/local/bin/vpsctl
 ```
 
-`Cargo.lock` pins the dependency graph. Use `--locked`; do not regenerate the lock
-as part of a release. This is dependency repeatability, not a claim of identical
-binary bytes. Compilation needs a C linker; on Debian install `build-essential`.
-Runtime probes use Debian's `coreutils` (timeout/df), `iproute2`, systemd, OpenSSH
-and optionally nftables. Missing helpers produce unavailable observations rather
-than requiring installation or elevation. There is no daemon or background service.
+Keep `Cargo.lock` pinned; `--locked` prevents dependency changes during release
+builds. This is dependency repeatability, not a universal identical-binary claim.
+Compilation needs a C linker (`build-essential` on Debian).
+
+Build a versioned amd64 Debian package without root:
+
+```sh
+# Packaging prerequisites: dpkg-dev, python3, build-essential, Rust, Git.
+./scripts/package-deb.sh
+python3 tests/package_deb.py
+# Optional system installation, only when you explicitly want it:
+sudo apt install ./dist/vpsctl_0.2.0_amd64.deb
+```
+
+Packaging compiles the explicit `x86_64-unknown-linux-gnu` target with Rust 1.99.0.
+`dpkg-shlibdeps` derives actual library requirements, and an ABI gate rejects a
+glibc floor newer than Debian 13's 2.41. Build on Debian 13 or with a compatible
+sysroot if a future Ubuntu runner exceeds this floor. The package installs only
+`/usr/bin/vpsctl` and documentation, with root ownership and a non-setuid binary.
+There are no maintainer scripts, configuration files or systemd units. Packaging
+never installs the package or invokes sudo. `SOURCE_DATE_EPOCH` defaults to the
+latest Git commit timestamp affecting this directory; use a clean committed tree
+for distribution. CI uploads the package as an artifact, not a GitHub release.
+
+Runtime helpers: coreutils (`timeout`, `df`), iproute2, systemd, OpenSSH, APT;
+nftables and curl are optional. Missing tools/permissions give unknown results.
+No Rust runtime, background service or running Docker daemon is required.
 
 ## Commands
 
 ```sh
-vpsctl                    # TUI; interactive stdin AND stdout required
+vpsctl                     # TUI; interactive stdin AND stdout required
 vpsctl --help
 vpsctl --version
-vpsctl status             # CPU count/load, RAM, root disk, uptime, kernel, OS
-vpsctl status --json
-vpsctl info               # Utility version, VPS Linux version if installed, OS
-vpsctl doctor             # Services, default route, resolver config, NTP
-vpsctl security           # Effective default-context SSH policy, timers, firewall visibility
+vpsctl status --json       # Online CPUs, load, RAM, root disk, uptime/kernel/OS
+vpsctl info                # Utility/OS/VPS Linux version, where installed
+vpsctl network --json      # Local interface state and typed IP addresses
+vpsctl doctor              # Offline services, route, resolver config, NTP checks
+vpsctl doctor --online     # Explicit outbound resolution and HTTPS HEAD probe
+vpsctl doctor --online --dns-name example.com --json
+vpsctl security --json     # SSH default context, effective APT policy, timers
 ```
 
-All four subcommands support `--json` and work without a terminal or root. Root
-can make additional security observations readable, but is not automatically
-requested. `sudo vpsctl` is supported when the administrator explicitly chooses it.
+Each subcommand supports `--json`. Ordinary commands work without root and without
+a terminal. No-argument invocation with redirected stdin/stdout exits promptly
+with instructions. Root can make some security observations readable; privileges
+are never automatically elevated. `sudo vpsctl` remains an explicit admin choice.
 
-The TUI uses the same collectors and data structures as CLI commands. Left/right
-or Tab/Shift-Tab changes sections; up/down scrolls; `r` refreshes; `q`, Esc or
-Ctrl-C exits. Resizing is supported. Observations are collected on entry/refresh,
-not continuously. Terminal modes are restored on normal exit, errors and Rust
-unwinding; SIGKILL cannot be handled. Each helper has a 4-second deadline plus
-1-second kill grace. Refresh is synchronous, so unavailable helpers can delay
-key handling until the bounded probes finish.
+For SSH Match evaluation, supply a **complete** connection context:
 
-## JSON and exit codes
+```sh
+vpsctl security --json \
+  --ssh-user debian --ssh-address 192.0.2.10 --ssh-host client.example \
+  --ssh-local-address 192.0.2.20 --ssh-local-port 22
+```
 
-JSON is a single object on stdout, with `schema_version: 1`, no ANSI sequences,
-no progress output and no raw helper stderr. Missing scalar information is `null`;
-missing OS fields are omitted from `info.os`. Sizes use bytes, uptime uses seconds,
-load is the Linux 1/5/15-minute load average, CPU count is online logical CPUs.
-`memory_available_bytes` is Linux MemAvailable, not a derived estimate.
+The five context options must be provided together. Addresses/port are typed;
+user/host reject context separators and invalid inputs. This runs `sshd -T -C`
+with fixed arguments, never a shell. Results cover that supplied context only;
+they are not a certificate that every possible SSH connection is secure.
 
-`doctor` and `security` produce:
+The effective APT dump is compared with the exact VPS Linux security-only origin
+pattern, no extra Allowed-Origins, explicit disabled automatic reboots, and a
+daily unattended-upgrade schedule. Nonmatching origins are a warning, not a claim
+that arbitrary custom distributions are insecure. Timers and configuration do
+not prove package freshness or a successful recent installation.
+
+## TUI and output
+
+Sections: Status, Info, Doctor, Security, Network. Left/right or Tab/Shift-Tab
+switches; up/down scrolls; `r` refreshes; `q`, Esc and Ctrl-C exit. Resizing works.
+CLI/TUI share collectors and result types. The TUI never initiates online probes.
+Refresh is synchronous, so unavailable helpers may delay key handling for a few
+seconds. Each helper is limited to 4 seconds plus a 1-second kill grace.
+Terminal modes restore on normal exit, errors and Rust unwinding; SIGKILL cannot
+be handled. Data refreshes on navigation/request, not continuously.
+
+JSON is one stdout object with `schema_version: 1`, no ANSI/progress output or raw
+helper stderr. Unavailable scalar values are `null`; missing OS fields are omitted
+from `info.os`. Bytes/seconds are explicit in field names; load is the 1/5/15-minute
+Linux load average. `network.interfaces` contains only interface names, link states
+and IP/prefix records, not arbitrary fields from helper responses.
+
+Diagnostic shape (abbreviated example, not a host health claim):
 
 ```json
 {"schema_version":1,"section":"doctor","checks":[{"id":"ntp_sync","level":"ok","summary":"Clock synchronized"}]}
 ```
 
-This is an abbreviated example, not a claim about the current host. Check IDs
-are stable in schema 1; consumers should accept additional fields/checks. Levels:
+IDs are stable within schema 1. Accept extra fields/check IDs. Levels:
 
 - `ok`: the specifically described observation was verified.
-- `warning`: inactive/transitional service or missing expected configuration.
+- `warning`: inactive/transitional service or a policy/configuration discrepancy.
 - `fail`: failed service or effective SSH setting contrary to VPS Linux policy.
-- `unknown`: missing tool/data, denied access or a condition not verified by MVP.
+- `unknown`: missing data/tool, denied access, probe failure or unverified condition.
 
-Exit 0: successful status/info output, or all diagnostic checks are OK.
+Exit 0: successful status/info/network output, or all diagnostics OK.
 Exit 1: at least one failed diagnostic (takes precedence over unknown/warning).
-Exit 2: incomplete/warning diagnostics, usage error, noninteractive TUI, or I/O error.
-Status/info exit 0 does not certify a healthy system: inspect null fields.
-Because the MVP explicitly reports coverage gaps, doctor/security commonly exit 2.
-Human summaries may change; automation should use JSON IDs/levels, not parse prose.
+Exit 2: incomplete/warning diagnostics, usage, noninteractive TUI or I/O error.
+A successful status/info/network command does not certify host health; inspect
+nulls. Coverage gaps commonly make doctor/security exit 2. Parse JSON IDs/levels,
+not human prose. Existing schema-1 commands/fields remain compatible in 0.2.0.
 
-## Security and limitations
+## Safety and limits
 
-No configuration writes, sudo calls, repairs, container execution or network
-changes are performed. Fixed absolute helper paths and argument arrays are used,
-without a shell or PATH lookup; helper output and file reads are capped at 256 KiB.
-No credentials, private keys, full environment, raw firewall rules or raw service
-stderr are printed. Human/TUI output replaces host control characters; JSON uses
-standard escaping. No Docker API socket connection or external network request
-is made. A running Docker service does not prove container/registry health.
+No configuration writes, repair commands, sudo calls, container execution, Docker
+socket connection or network changes. Fixed absolute helpers and argument arrays;
+no shell or PATH search. Files/stdout/stderr are capped at 256 KiB. Warnings on
+stderr make a probe unknown (APT warnings can indicate unreadable configuration).
+APT_CONFIG and DBus bus-address overrides are ignored to inspect system defaults.
+No credentials, private keys, full environment, raw firewall rules or helper stderr
+are printed. Human/TUI output strips controls; JSON uses standard escaping.
 
-DNS configuration and default-route presence are checked, **not** successful DNS
-resolution or Internet connectivity. SSH `sshd -T` checks its default context;
-Match conditions for a particular user/address are explicitly unverified. A
-readable nftables ruleset does not establish a secure ingress policy; firewall
-assessment remains unknown. Timers do not prove current packages or effective
-unattended-upgrade origins. QEMU Guest Agent may legitimately be inactive where
-no virtio agent channel exists. An unsupported/container host is handled through
-unavailable/unknown observations; there is no assumption that it is VPS Linux.
-Build commit/image SHA are not guessed: the image bundle holds that metadata;
-the current image installs only `/usr/share/vps-linux/version` and packages.tsv.
+Offline doctor/network/TUI make no external network requests. `doctor --online`
+explicitly permits NSS resolution of the selected hostname and a certificate-
+verified HTTPS HEAD to `https://deb.debian.org/`. Curl user configuration is
+disabled; configured environment proxies and CA trust are retained. DNS results
+may come from hosts/cache/NSS, so success is not claimed as a direct DNS query.
+A probe failure is unknown: missing curl, proxy policy and offline networking
+cannot be reliably distinguished here. No arbitrary URL, credentials or payload
+can be supplied. The hostname option is rejected without `--online`.
 
-## Tests
+Firewall assessment remains unknown even if nftables is readable; the application
+does not guess effective ingress policy. A running Docker service does not prove
+API/container/registry health. QEMU Agent may be inactive without a virtio channel.
+Unsupported/container hosts produce unavailable/unknown values instead of being
+assumed to be VPS Linux. Image commit/checksum are not guessed: current images
+install a version file, while detailed metadata is in the distributed bundle.
 
-Run from `vpsctl/`, on Linux with Python 3 for PTY tests:
+## Validation and follow-up
 
 ```sh
 cargo +1.99.0 fmt --all -- --check
@@ -108,29 +153,21 @@ cargo +1.99.0 clippy --locked --all-targets --all-features -- -D warnings
 cargo +1.99.0 test --locked --all-targets
 cargo +1.99.0 build --locked
 python3 tests/tui_pty.py
+python3 -m unittest discover -s tests -p 'test_*.py'
 cargo +1.99.0 build --locked --release
+./scripts/package-deb.sh
+python3 tests/package_deb.py
 ```
 
-Unit tests cover malformed/missing information and classifications. CLI tests
-check actual executable output, JSON, help/version, usage and noninteractive
-behavior without root or Docker. PTY tests exercise the actual terminal UI,
-navigation, refresh, resize, Ctrl-C and termios restoration. A separate
-`Validate vpsctl` workflow runs on Rust 1.99.0 and caches Cargo downloads/builds.
-Full Debian 13 guest verification and distro packaging remain follow-up work.
+The separate `Validate vpsctl` CI runs on the exact MSRV, caches Cargo downloads/
+builds and uploads the `.deb`. See [actual validation](VALIDATION.md). PTY tests
+exercise navigation including Network, refresh, resize and terminal restoration.
+Package tests inspect/extract without installing; they do not prove clean-guest
+installation. Full Debian 13 VM acceptance is still required before image integration.
 
-## Future image integration and v0.2.0
-
-Build a versioned `.deb` outside the guest with the pinned Rust toolchain and lock,
-install under `/usr/bin/vpsctl`, and add it to a future image only after checking
-its Debian 13 runtime ABI, package manifest/SBOM and VM smoke tests. Do not insert
-Rust or development tools into the server image. Keep this change separate from
-the v0.3 release; no packaging hook is enabled by this MVP.
-
-Next: explicit opt-in DNS/connectivity probes, structured Docker health via an
-approved access model, effective APT origin assessment, and context-aware SSH/
-firewall diagnostics. Add fixture-based Debian 13 guest acceptance before shipping.
-Networking/storage/settings TUI sections should arrive with their actual services,
-not empty placeholders. Future mutations need typed validated inputs, a displayed
-plan and explicit confirmation, atomic updates where possible, backups and tested
-rollback/recovery (especially when an SSH connection could be lost). There are
-no privileged mutation features in 0.1.0.
+Next: install/test the `.deb` in a disposable Debian 13 guest, then integrate into
+a future image with package manifest/SBOM/boot coverage. Do not include Rust build
+tools in the server image. Add structured Docker observations and fixture-backed
+firewall analysis before declaring policy health. Future configuration mutations
+need typed validation, a displayed plan, explicit confirmation, backups, atomic
+updates where feasible and tested remote-safe rollback. No mutations are implemented.

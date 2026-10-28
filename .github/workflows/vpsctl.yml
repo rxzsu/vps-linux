@@ -38,3 +38,18 @@ jobs:
           python3 tests/tui_pty.py
       - name: Release build on MSRV
         run: cargo +1.99.0 build --locked --release
+      - name: Build Debian package and check payload
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev shellcheck
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          shellcheck scripts/package-deb.sh
+          ./scripts/package-deb.sh
+          python3 tests/package_deb.py
+      - name: Upload Debian package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: vpsctl-amd64-deb
+          path: vpsctl/dist/*.deb
+          if-no-files-found: error
+          retention-days: 7

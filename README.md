@@ -73,5 +73,5 @@ See [website/README.md](website/README.md) for Vercel import settings, the custo
 ## vpsctl
 
 The separate [vpsctl Rust utility](vpsctl/README.md) provides a read-only CLI and
-terminal control center. Version 0.1.0 is developed independently of the image;
+terminal control center. Version 0.2.0 is developed independently of the image;
 it is not included in the v0.3 image build or existing release assets.

@@ -27,7 +27,7 @@ fn redirected_no_arguments_fails_promptly_and_usefully() {
 
 #[test]
 fn json_commands_have_schema_and_no_terminal_formatting() {
-    for name in ["status", "info", "doctor", "security"] {
+    for name in ["status", "info", "doctor", "security", "network"] {
         let output = run(&[name, "--json"]);
         assert!([Some(0), Some(1), Some(2)].contains(&output.status.code()));
         assert!(!output.stdout.contains(&0x1b));
@@ -52,4 +52,52 @@ fn json_commands_have_schema_and_no_terminal_formatting() {
 #[test]
 fn invalid_commands_do_not_launch_tui() {
     assert_eq!(run(&["mutate"]).status.code(), Some(2));
+}
+
+#[test]
+fn outbound_checks_are_opt_in_and_context_must_be_complete() {
+    let offline = run(&["doctor", "--json"]);
+    let value: serde_json::Value = serde_json::from_slice(&offline.stdout).unwrap();
+    assert!(
+        !value["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|c| c["id"] == "dns_resolution" || c["id"] == "https_connectivity")
+    );
+    for args in [
+        vec!["doctor", "--dns-name", "example.com"],
+        vec!["doctor", "--online", "--dns-name", "a,b"],
+        vec!["security", "--ssh-user", "debian"],
+        vec!["security", "--ssh-address", "192.0.2.1"],
+    ] {
+        assert_eq!(run(&args).status.code(), Some(2));
+    }
+}
+
+#[test]
+fn complete_ssh_context_is_accepted_without_privilege_escalation() {
+    let output = run(&[
+        "security",
+        "--json",
+        "--ssh-user",
+        "debian",
+        "--ssh-address",
+        "192.0.2.1",
+        "--ssh-host",
+        "client.example",
+        "--ssh-local-address",
+        "192.0.2.2",
+        "--ssh-local-port",
+        "22",
+    ]);
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["section"], "security");
+    assert!(
+        value["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|c| c["id"] == "ssh_match_context")
+    );
 }

@@ -1,19 +1,27 @@
-# vpsctl 0.1.0 validation
+# vpsctl 0.2.0 validation
 
-Executed in the development environment: Debian 13 x86_64 container,
-`rustc 1.99.0 (b940084d7 2026-09-28)`. All Cargo commands used the committed lock.
+Executed on the development Debian 13 x86_64 container with
+`rustc 1.99.0 (b940084d7 2026-09-28)`; dependencies were locked.
 
 - `cargo +1.99.0 fmt --all -- --check`: passed.
 - `cargo +1.99.0 clippy --locked --all-targets --all-features -- -D warnings`: passed.
-- `cargo +1.99.0 test --locked --all-targets`: 9 unit and 4 CLI integration tests passed.
-- `cargo +1.99.0 build --locked`: passed.
-- `python3 tests/tui_pty.py`: 2 actual PTY UI/terminal-restoration tests passed.
-- `cargo +1.99.0 build --locked --release`: passed.
-- Release binary `status --json` and `info --json`: executed successfully, with
-  actual host observations and null VPS Linux image version on the container.
-- Existing repository `tests/static-checks.sh`: all 60 tests and shell checks passed.
+- `cargo +1.99.0 test --locked --all-targets`: 13 unit + 6 CLI tests passed.
+- `cargo +1.99.0 build --locked` and `--release`: passed.
+- `python3 tests/tui_pty.py`: 2 tests passed (Network navigation, refresh, resize,
+  q/Ctrl-C and termios restoration, using the real executable/PTY).
+- Python packaging ABI tests: 2 passed; newer/unknown glibc floors rejected.
+- `scripts/package-deb.sh`: amd64 GNU/Linux build and Debian package succeeded.
+  Derived dependencies: libc6 >= 2.39, libgcc-s1 >= 4.2, coreutils.
+  dpkg-shlibdeps emitted package-directory/usr-merge diversion warnings on this
+  container; dependency scan exited successfully. No clean-VM install is claimed.
+- `python3 tests/package_deb.py`: extracted payload/metadata/version test passed;
+  no maintainer scripts, services/configuration or setuid permission found.
+- ShellCheck on package script and workflow YAML parsing: passed.
+- Existing image `tests/static-checks.sh`: all 60 tests and shell checks passed.
+- Actual `doctor --online --json`: HTTPS HEAD to deb.debian.org verified through
+  the configured environment; NSS resolution was unknown rather than healthy.
 
-No root, Docker daemon or VPS Linux VM was required for these checks. This does
-not establish packaged Debian guest acceptance. The new GitHub Actions workflow
-has been authored but was not observed running from this environment. The image
-builder, image VERSION, published tags and release assets were not changed.
+24 utility/terminal/package tests passed in total. No package installation, root
+or Docker daemon was needed. The GitHub Actions package job was authored but not
+observed executing here. Debian 13 guest installation/boot acceptance remains a
+follow-up before image integration. Image VERSION, builder and releases unchanged.

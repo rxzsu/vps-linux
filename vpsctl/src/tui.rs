@@ -1,4 +1,4 @@
-use crate::system;
+use crate::{network, security, system};
 use anyhow::Result;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
@@ -61,7 +61,8 @@ fn section(index: usize) -> Result<String> {
         0 => serde_json::to_value(system::status())?,
         1 => serde_json::to_value(system::info())?,
         2 => serde_json::to_value(system::doctor())?,
-        _ => serde_json::to_value(system::security())?,
+        3 => serde_json::to_value(security::security(None))?,
+        _ => serde_json::to_value(network::network())?,
     };
     Ok(plain(&value))
 }
@@ -86,7 +87,7 @@ pub fn run() -> Result<()> {
     loop {
         terminal.draw(|frame| {
             let areas = Layout::vertical([Constraint::Length(3), Constraint::Min(1), Constraint::Length(3)]).split(frame.area());
-            frame.render_widget(Tabs::new(["Status", "Info", "Doctor", "Security"]).select(selected).highlight_style(Style::default().fg(Color::Cyan)).block(Block::default().title("vpsctl 0.1.0 · read-only").borders(Borders::ALL)), areas[0]);
+            frame.render_widget(Tabs::new(["Status", "Info", "Doctor", "Security", "Network"]).select(selected).highlight_style(Style::default().fg(Color::Cyan)).block(Block::default().title("vpsctl 0.2.0 · read-only").borders(Borders::ALL)), areas[0]);
             frame.render_widget(Paragraph::new(content.as_str()).wrap(Wrap { trim: false }).scroll((scroll, 0)).block(Block::default().borders(Borders::ALL)), areas[1]);
             frame.render_widget(Paragraph::new("←/→ Tab: sections · ↑/↓: scroll · r: refresh · q/Esc/Ctrl-C: quit\nUnknown means unverified. Probes may take a few seconds.").block(Block::default().borders(Borders::TOP)), areas[2]);
         })?;
@@ -105,12 +106,12 @@ pub fn run() -> Result<()> {
             let mut refresh = false;
             match key.code {
                 KeyCode::Right | KeyCode::Tab => {
-                    selected = (selected + 1) % 4;
+                    selected = (selected + 1) % 5;
                     scroll = 0;
                     refresh = true;
                 }
                 KeyCode::Left | KeyCode::BackTab => {
-                    selected = (selected + 3) % 4;
+                    selected = (selected + 4) % 5;
                     scroll = 0;
                     refresh = true;
                 }
