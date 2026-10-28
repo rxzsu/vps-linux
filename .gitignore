@@ -48,3 +48,6 @@ website/.env*
 /build/
 __pycache__/
 *.pyc
+
+# Staged downloadable CI bundle
+/ci-artifacts/
