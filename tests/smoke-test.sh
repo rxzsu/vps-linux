@@ -121,7 +121,7 @@ PY
         -device virtio-net-pci,netdev=net0 -device virtio-rng-pci \
         -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:$port-:22" > "$work/$instance-qemu.log" 2>&1 &
     pid=$!
-    ssh_opts=(-p "$port" -i "$work/id_ed25519" -o BatchMode=yes -o IdentitiesOnly=yes -o PasswordAuthentication=no -o StrictHostKeyChecking=accept-new -o "UserKnownHostsFile=$work/$instance-known-hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=3 -o LogLevel=ERROR)
+    ssh_opts=(-p "$port" -i "$work/id_ed25519" -o BatchMode=yes -o IdentitiesOnly=yes -o PasswordAuthentication=no -o StrictHostKeyChecking=accept-new -o "UserKnownHostsFile=$work/$instance-known-hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=3 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o LogLevel=ERROR)
     deadline=$((SECONDS + 900))
     until ssh "${ssh_opts[@]}" debian@127.0.0.1 true 2>/dev/null; do
         kill -0 "$pid" 2>/dev/null || { echo 'QEMU exited before SSH became ready.' >&2; exit 1; }
@@ -132,14 +132,18 @@ PY
     timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
     timeout 60 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n docker import - vps-linux-smoke' < "$work/container.tar"
     [[ $(timeout 60 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n docker run --rm --network=none vps-linux-smoke /busybox echo vps-linux-container-ok') == vps-linux-container-ok ]]
-    ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /etc/machine-id' > "$work/$instance-machine-id"
-    ssh "${ssh_opts[@]}" debian@127.0.0.1 'ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub' > "$work/$instance-host-key"
-    if ssh "${ssh_opts[@]}" root@127.0.0.1 true 2>/dev/null; then echo 'Root SSH login unexpectedly succeeded' >&2; exit 1; fi
+    timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /etc/machine-id' > "$work/$instance-machine-id"
+    for kind in ed25519 ecdsa; do
+        timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 "ssh-keygen -lf /etc/ssh/ssh_host_${kind}_key.pub" | awk '{print $2}' > "$work/$instance-$kind-host-key"
+    done
+    if timeout 30 ssh "${ssh_opts[@]}" root@127.0.0.1 true 2>/dev/null; then echo 'Root SSH login unexpectedly succeeded' >&2; exit 1; fi
     stop_vm
     rm -f "$work/seed.iso"
     printf 'Instance %s: UEFI, cloud-init, SSH, Docker, network, ZRAM and NTP service checks passed\n' "$instance"
 done
 ! cmp -s "$work/a-machine-id" "$work/b-machine-id" || { echo 'machine-id was reused' >&2; exit 1; }
-! cmp -s "$work/a-host-key" "$work/b-host-key" || { echo 'SSH host key was reused' >&2; exit 1; }
+for kind in ed25519 ecdsa; do
+    ! cmp -s "$work/a-$kind-host-key" "$work/b-$kind-host-key" || { echo "$kind SSH host key was reused" >&2; exit 1; }
+done
 printf 'PASS: two fresh instances have distinct machine IDs and SSH host keys.\n'
 printf 'NTP synchronization and external registry access: NOT RUN (offline smoke).\n'

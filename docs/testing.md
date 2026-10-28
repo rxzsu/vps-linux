@@ -33,7 +33,7 @@ Assertions:
 - **real offline container execution** by importing the host's trusted static BusyBox binary into the disposable guest; no external image registry needed;
 - 1 GiB ZRAM, LZ4, swap priority 100;
 - resolved/networkd/timesyncd active and no failed systemd units;
-- fresh valid machine-id and ed25519/ECDSA host keys, distinct IDs/ed25519 fingerprints between two instances.
+- fresh valid machine-id and ed25519/ECDSA host keys, distinct IDs/ed25519 and ECDSA fingerprints between two instances.
 
 The default test checks NTP **service activity**, not actual time synchronization. External registry pulls and NTP synchronization are **not run** by the offline suite. For release validation on an Internet-connected Zorin host, additionally check `timedatectl show -p NTPSynchronized --value` equals `yes`, `sudo docker run --rm hello-world`, and an HTTP container workload. Keep these outcomes separate.
 
