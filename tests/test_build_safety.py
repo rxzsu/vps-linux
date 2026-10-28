@@ -113,7 +113,7 @@ class FinalCandidateSelection(unittest.TestCase):
 
 class CommandLine(unittest.TestCase):
     def test_help_does_not_need_privilege(self):
-        for script in ('build.sh', 'tests/smoke-test.sh'):
+        for script in ('build.sh', 'tests/smoke-test.sh', 'scripts/publish-v0.2.sh'):
             with self.subTest(script=script):
                 run = subprocess.run([str(ROOT / script), '--help'], capture_output=True, text=True)
                 self.assertEqual(run.returncode, 0)

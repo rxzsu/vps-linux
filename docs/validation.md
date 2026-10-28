@@ -35,3 +35,9 @@ These are owner-reported results, not VM executions in the managed authoring con
 - No v0.2 tag, merge, uploaded release asset or public release has been created by this task.
 
 Owner-supplied development metadata binds the reported results to image SHA256 `a623923e001a6b67a8adb7d83f92c1e12a4cbcd11a2d3526529dc606c13be72d`, package-manifest SHA256 `8b51580062a8c568a224890bdf15ca35e910a6c2e2820459b013bc6a254252a7`, source `1782d8f8c69ff297e76a210d294423d3a07ebeb4` with `source_dirty: true` and build timestamp `2026-10-28T16:51:14.470097+00:00`. This evidence does not transfer automatically to the final stable-version artifact. `boot_smoke_test: not_run` remains unchanged in that immutable build-time metadata; the later test results are recorded separately here.
+
+## Owner-reported final candidate acceptance
+
+The owner supplied passing extended checks for `output/vps-linux-v0.2-20261028T170809Z-7d0ec202786e/vps-linux-v0.2.qcow2`, built from final-version source `7d0ec202786edc037816a946146f1b40912515eb`. The release-check wrapper had admitted version 0.2 with source_dirty=false before running the harness. Both independent boots and the online/reboot checks passed, including NTP sync, registry pulls, HTTP recovery, persistent reboot identities and no failed units. The final image hash is read and validated locally from the original bundle by the publication helper; it has not been supplied to the cloud agent.
+
+Publication is still pending execution on the owner's host. `scripts/publish-v0.2.sh` targets this exact tested commit and bundle, uploads a draft, re-downloads and verifies the image, then publishes. It does not merge main or alter v0.1. A failed upload/verification may leave a draft; inspect that state before retrying rather than overwriting existing tags/assets.
