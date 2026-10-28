@@ -6,7 +6,7 @@
 ./tests/static-checks.sh
 ```
 
-Bash syntax, ShellCheck, 45 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG, qemu-utils, minisign and apt-config. Integrity tests use real sparse QCOW2 files and ephemeral minisign keys; they do not boot VMs. These tests do not prove an image boots.
+Bash syntax, ShellCheck, Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG, qemu-utils, minisign and apt-config. Integrity tests use real sparse QCOW2 files and ephemeral minisign keys; they do not boot VMs. These tests do not prove an image boots.
 
 ## Automated acceptance test
 
@@ -141,3 +141,9 @@ still fail the build; functional checks are not retried. On failure, serial/QEMU
 log tails are printed in the job and logs are retained under `smoke-diagnostics/`
 in the metadata artifact, even when the image output directory is root-owned.
 After a fix, use **Run workflow** on `main`: re-running an old run uses its old commit.
+
+CI caches downloaded host APT packages and the libguestfs appliance in `.ci-cache/`.
+Cache keys include runner OS, architecture, hosted image version and UTC day;
+restores stay within the same hosted image version. APT still updates indexes
+and resolves current packages. QCOW2 bundles, signing material and test results
+are not cached; each manual run builds and tests the current checkout.

@@ -54,3 +54,6 @@ __pycache__/
 
 # Smoke diagnostics (runner-writable even when output is root-owned)
 /smoke-diagnostics/
+
+# CI host package/appliance cache
+/.ci-cache/

@@ -60,12 +60,27 @@ jobs:
           sudo rm -f /swapfile
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
+      - name: Prepare build cache
+        id: cache_context
+        run: |
+          mkdir -p .ci-cache/apt/partial .ci-cache/libguestfs
+          echo "image=${ImageOS}-${ImageVersion}" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - name: Restore host packages and libguestfs appliance
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ci-cache/
+          key: image-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache_context.outputs.image }}-${{ steps.cache_context.outputs.date }}
+          restore-keys: |
+            image-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache_context.outputs.image }}-
       - name: Install host prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs shellcheck
+          sudo apt-get -o Dir::Cache::archives="$GITHUB_WORKSPACE/.ci-cache/apt" -o APT::Keep-Downloaded-Packages=true install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs shellcheck
       - name: Build development candidate
-        run: sudo ./build.sh
+        run: |
+          sudo chown -R root:root .ci-cache/libguestfs
+          sudo env LIBGUESTFS_CACHEDIR="$GITHUB_WORKSPACE/.ci-cache/libguestfs" ./build.sh
       - name: Boot two disposable instances with disk-growth test
         run: |
           image=$(find output -maxdepth 2 -name "vps-linux-v$(cat VERSION).qcow2" -type f -print -quit)
@@ -89,6 +104,7 @@ jobs:
             --certificate-identity-regexp '^https://github\.com/rxzsu/vps-linux/\.github/workflows/validate-build-system\.yml@refs/' \
             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
           cp artifacts/SHA256SUMS artifacts/tampered-checksums
+          chmod u+w artifacts/tampered-checksums
           printf '\n' >> artifacts/tampered-checksums
           if cosign verify-blob artifacts/tampered-checksums \
             --bundle artifacts/SHA256SUMS.sigstore.json \
@@ -118,6 +134,12 @@ jobs:
           compression-level: 0
           retention-days: 7
           if-no-files-found: error
+      - name: Make build cache readable for saving
+        if: always()
+        run: |
+          if [[ -d .ci-cache && ! -L .ci-cache ]]; then
+            sudo chown -R "$(id -u):$(id -g)" .ci-cache
+          fi
       - name: Retain metadata, SBOM and signature (no private keys)
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
