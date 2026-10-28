@@ -1,0 +1,26 @@
+# Official Debian main only. No desktop, vpsadmin or third-party Docker repository.
+linux-image-amd64
+systemd-sysv
+dbus
+systemd-resolved
+systemd-timesyncd
+systemd-zram-generator
+udev
+initramfs-tools
+grub-efi-amd64-bin
+grub2-common
+dosfstools
+e2fsprogs
+ca-certificates
+debian-archive-keyring
+openssh-server
+cloud-init
+cloud-guest-utils
+sudo
+docker.io
+docker-cli
+docker-compose
+iproute2
+iputils-ping
+curl
+locales

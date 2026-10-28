@@ -1,0 +1,49 @@
+name: Validate image build system
+on:
+  push:
+    branches: [feature/v0.2-build-system]
+  pull_request:
+    paths: ['build.sh', 'scripts/**', 'configs/**', 'packages/**', 'tests/**', 'docs/**', '.github/workflows/validate-build-system.yml']
+  workflow_dispatch:
+    inputs:
+      build_and_boot:
+        description: 'Build v0.2-dev and boot two disposable instances (not a release)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck python3-yaml gnupg
+      - run: ./tests/static-checks.sh
+  build-and-boot:
+    if: github.event_name == 'workflow_dispatch' && inputs.build_and_boot
+    needs: static
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs
+      - name: Build development candidate
+        run: sudo ./build.sh
+      - name: Boot two disposable instances
+        run: |
+          image=$(find output -maxdepth 2 -name 'vps-linux-v0.2-dev.qcow2' -type f -print -quit)
+          test -n "$image"
+          ./tests/smoke-test.sh "$image" --accel tcg
+      - name: Retain build metadata only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0.2-build-metadata
+          path: |
+            output/*/build.json
+            output/*/packages.tsv
+            output/*/*.sha256
+          if-no-files-found: ignore

@@ -1,0 +1,6 @@
+#cloud-config
+hostname: vps-linux-example
+users: [default]
+# Replace with YOUR PUBLIC key. Never paste a private key here.
+ssh_authorized_keys:
+  - ssh-ed25519 REPLACE_WITH_YOUR_PUBLIC_KEY
