@@ -47,3 +47,21 @@ The QCOW2 image will be published under GitHub Releases.
 ## Status
 
 **VPS Linux v0.1 — initial release**
+
+## Website
+
+The official website is prepared for Cloudflare Pages at https://vps-linux.pages.dev/. The address is a deployment default; this repository does not provision that hostname.
+
+The frontend lives in [`website/`](website/). It uses Vue 3, strict TypeScript, Vite, Tailwind CSS v4, Motion for Vue and Lucide.
+
+```sh
+cd website
+bun install --frozen-lockfile
+bun run dev
+# Type-check and produce the static site
+bun run build
+# Browser smoke tests (requires Chromium or Playwright's Chromium)
+bun run test
+```
+
+See [website/README.md](website/README.md) for deployment and validation.

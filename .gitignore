@@ -34,3 +34,11 @@ nocloud-ssh-test/
 **/shadow
 **/shadow-
 **/machine-id
+
+# Website dependencies and generated files
+website/node_modules/
+website/dist/
+website/test-results/
+website/playwright-report/
+website/.env*
+!website/.env.example
