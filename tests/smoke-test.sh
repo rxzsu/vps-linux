@@ -4,16 +4,26 @@ set -Eeuo pipefail
 umask 077
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 if [[ ${1:-} == --help || ${1:-} == -h ]]; then
-    printf 'Usage: ./tests/smoke-test.sh IMAGE.qcow2 [--accel auto|kvm|tcg]\nRequires 4 GiB available RAM, QEMU, OVMF, cloud-localds, busybox-static and SSH tools.\n'; exit 0
+    printf 'Usage: ./tests/smoke-test.sh IMAGE.qcow2 [--accel auto|kvm|tcg] [--release-check]\nRelease checks additionally require guest Internet/NTP access and test reboot.\n'; exit 0
 fi
-[[ $# == 1 || ( $# == 3 && $2 == --accel ) ]] || { echo 'Use smoke-test.sh --help' >&2; exit 1; }
-accel=${3:-auto}
+[[ $# -gt 0 ]] || { echo 'Use smoke-test.sh --help' >&2; exit 1; }
+input_image=$1
+shift
+accel=auto
+release_check=0
+while (( $# )); do
+    case $1 in
+        --accel) [[ $# -ge 2 ]] || { echo 'Missing acceleration value' >&2; exit 1; }; accel=$2; shift 2 ;;
+        --release-check) release_check=1; shift ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
 [[ $accel == auto || $accel == kvm || $accel == tcg ]] || { echo 'Invalid acceleration' >&2; exit 1; }
 for tool in qemu-img qemu-system-x86_64 cloud-localds ssh ssh-keygen python3 timeout tar file sha256sum; do
     command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 1; }
 done
-[[ -f $1 && ! -L $1 && $1 == *.qcow2 ]] || { echo 'Image must be a regular QCOW2 file, not a symlink or device.' >&2; exit 1; }
-image=$(realpath -e -- "$1")
+[[ -f $input_image && ! -L $input_image && $input_image == *.qcow2 ]] || { echo 'Image must be a regular QCOW2 file, not a symlink or device.' >&2; exit 1; }
+image=$(realpath -e -- "$input_image")
 [[ $image =~ ^/[a-zA-Z0-9._/-]+$ ]] || { echo "Use an image path without spaces, commas or shell metacharacters." >&2; exit 1; }
 qemu-img check -f qcow2 "$image"
 qemu-img info --output=json --force-share "$image" | python3 "$PROJECT_DIR/scripts/check-image.py"
@@ -137,6 +147,32 @@ PY
         timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 "ssh-keygen -lf /etc/ssh/ssh_host_${kind}_key.pub" | awk '{print $2}' > "$work/$instance-$kind-host-key"
     done
     if timeout 30 ssh "${ssh_opts[@]}" root@127.0.0.1 true 2>/dev/null; then echo 'Root SSH login unexpectedly succeeded' >&2; exit 1; fi
+    if (( release_check )) && [[ $instance == a ]]; then
+        echo 'Release checks: NTP synchronization, registry and HTTP workload...'
+        timeout 900 ssh "${ssh_opts[@]}" debian@127.0.0.1 'bash -s' < "$PROJECT_DIR/tests/verify-online-guest.sh"
+        boot_before=$(timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /proc/sys/kernel/random/boot_id')
+        [[ $boot_before =~ ^[a-f0-9-]{36}$ ]] || { echo 'Invalid pre-reboot boot ID' >&2; exit 1; }
+        echo 'Release checks: rebooting disposable instance...'
+        reboot_status=0
+        timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n systemctl reboot' || reboot_status=$?
+        [[ $reboot_status == 0 || $reboot_status == 255 ]] || { echo 'Reboot command failed' >&2; exit 1; }
+        deadline=$((SECONDS + 900))
+        while :; do
+            kill -0 "$pid" 2>/dev/null || { echo 'QEMU exited during reboot' >&2; exit 1; }
+            boot_after=$(timeout 10 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /proc/sys/kernel/random/boot_id' 2>/dev/null || true)
+            if [[ $boot_after =~ ^[a-f0-9-]{36}$ && $boot_after != "$boot_before" ]]; then break; fi
+            (( SECONDS < deadline )) || { echo 'Reboot did not complete in time' >&2; exit 1; }
+            sleep 2
+        done
+        timeout 600 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
+        timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /etc/machine-id' > "$work/reboot-machine-id"
+        cmp "$work/$instance-machine-id" "$work/reboot-machine-id" || { echo 'Machine ID changed on reboot' >&2; exit 1; }
+        for kind in ed25519 ecdsa; do
+            timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 "ssh-keygen -lf /etc/ssh/ssh_host_${kind}_key.pub" | awk '{print $2}' > "$work/reboot-$kind-host-key"
+            cmp "$work/$instance-$kind-host-key" "$work/reboot-$kind-host-key" || { echo 'Host key changed on reboot' >&2; exit 1; }
+        done
+        timeout 300 ssh "${ssh_opts[@]}" debian@127.0.0.1 'bash -s -- --after-reboot' < "$PROJECT_DIR/tests/verify-online-guest.sh"
+    fi
     stop_vm
     rm -f "$work/seed.iso"
     printf 'Instance %s: UEFI, cloud-init, SSH, Docker, network, ZRAM and NTP service checks passed\n' "$instance"
@@ -146,4 +182,8 @@ for kind in ed25519 ecdsa; do
     ! cmp -s "$work/a-$kind-host-key" "$work/b-$kind-host-key" || { echo "$kind SSH host key was reused" >&2; exit 1; }
 done
 printf 'PASS: two fresh instances have distinct machine IDs and SSH host keys.\n'
-printf 'NTP synchronization and external registry access: NOT RUN (offline smoke).\n'
+if (( release_check )); then
+    printf 'PASS: release checks (NTP sync, registry, HTTP, reboot and persistent identities).\n'
+else
+    printf 'NTP synchronization, registry, HTTP and reboot: NOT RUN (offline smoke).\n'
+fi

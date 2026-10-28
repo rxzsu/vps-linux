@@ -83,3 +83,13 @@ The manual path uses your own normal SSH host-key verification. An old known-hos
 ## CI
 
 `.github/workflows/validate-build-system.yml` runs static checks on the development branch and relevant PRs. A manual workflow_dispatch with `build_and_boot=true` installs tools on an Ubuntu 24.04 runner, builds and boots with TCG. This workflow has not yet run; GitHub runner success does not replace required local Zorin validation. It uploads metadata only, never images/keys, and does not publish releases or deploy the website.
+
+## Extended pre-release check
+
+```sh
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2-dev.qcow2 --release-check
+```
+
+This opt-in mode needs guest Internet access to NTP servers and Docker Hub. It runs the offline checks on both disposable instances, and additionally on instance A waits for actual NTP synchronization, pulls/runs hello-world and nginx, verifies HTTP, reboots the guest, waits for a changed boot ID, reruns functional/security checks and checks that machine-id and both SSH host keys persist. It then checks the HTTP container restarts, NTP resynchronizes and no systemd units fail. All phases have bounded timeouts; network failures fail the check rather than being marked passed. The backing image remains unchanged.
+
+The extended VM mode has not been executed in the managed authoring environment. The owner reported a successful local build (after the now-committed explicit Bash cleanup fix) and successful two-instance offline smoke checks on Zorin. Extended checks still need an actual run. These tests alone do not publish or promote a release.

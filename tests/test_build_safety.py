@@ -89,6 +89,13 @@ class CommandLine(unittest.TestCase):
                 self.assertEqual(run.returncode, 0)
                 self.assertIn('Usage:', run.stdout)
 
+    def test_release_test_options_reject_malformed_arguments(self):
+        for flags, message in ((['--bad'], 'Unknown option'), (['--accel'], 'Missing acceleration'), (['--accel', 'bad'], 'Invalid acceleration')):
+            with self.subTest(flags=flags):
+                run = subprocess.run([str(ROOT / 'tests/smoke-test.sh'), 'image.qcow2', *flags], capture_output=True, text=True)
+                self.assertNotEqual(run.returncode, 0)
+                self.assertIn(message, run.stderr)
+
     def test_unknown_build_argument_rejected(self):
         run = subprocess.run([str(ROOT / 'build.sh'), '--disk=/dev/sda'], capture_output=True, text=True)
         self.assertNotEqual(run.returncode, 0)
