@@ -6,7 +6,7 @@
 ./tests/static-checks.sh
 ```
 
-Bash syntax, ShellCheck, 16 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
+Bash syntax, ShellCheck, 17 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
 
 ## Automated acceptance test
 

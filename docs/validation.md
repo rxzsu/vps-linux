@@ -13,13 +13,23 @@ Authoring environment: managed Debian 13 x86_64 container, 2026-10-28. No root p
 
 - Website production build and all 9 desktop/mobile/reduced-motion RU/EN browser tests passed after correcting v0.1 Compose/provisioning documentation.
 
-## Not run / release blockers
+## Owner-reported Zorin validation — 2026-10-28
 
-- Full mmdebstrap bootstrap and package installation in the intended chroot.
-- Actual GPT/filesystem creation, initramfs/GRUB installation and QCOW2 packaging.
-- QEMU integrity checks and UEFI boot of a newly built v0.2 candidate.
-- Two-instance cloud-init, SSH, Docker, ZRAM, NTP-service, failed-unit and identity-isolation smoke tests against that candidate.
-- Actual NTP synchronization, external registry/HTTP workload tests, reboot and developer's Zorin-host validation.
-- GitHub Actions manual integration workflow.
+The owner supplied terminal output from the local Zorin/Noble host for candidate:
+`output/vps-linux-v0.2-dev-20261028T164637Z-1782d8f8c69f/vps-linux-v0.2-dev.qcow2`.
+These are owner-reported results, not VM executions in the managed authoring container.
 
-These are not passing checks and do not establish a working/released v0.2 image. The implementation is prepared for review and real-host validation; fixes may still be needed when the first integration run supplies evidence.
+- Build completed after applying the explicit Bash cleanup invocation, now committed in `fc89f71`. Kernel observed: `6.12.113+deb13-amd64`.
+- GPT/EFI/ext4 population, initramfs/GRUB installation, QCOW2 integrity and generated SHA256 verification succeeded.
+- Offline two-instance smoke passed: UEFI, Debian, NoCloud completion without errors, key-based SSH, effective SSH restrictions, sudo, Docker container execution, both Compose interfaces, network, ZRAM, active NTP service and no failed units.
+- Extended `--release-check` passed: actual NTP synchronization, Docker Hub hello-world/nginx pulls, HTTP response, guest reboot with changed boot ID, restored HTTP service, NTP resynchronization and persistent machine-id/SSH host keys.
+- Two independent instances had distinct machine IDs and host keys.
+
+## Remaining release preparation
+
+- Inspect the candidate's original build.json, checksum and package manifest to bind reported checks to the exact artifact; these files and QCOW2 currently remain on the owner's host.
+- The tested artifact and current builder identify as `0.2-dev`. A stable `0.2` build must use consistent version markers/metadata and receive acceptance testing after promotion; do not silently rename/relabel the existing immutable candidate.
+- Preserve exact source provenance, including the local Bash-launch patch applied on top of `1782d8f`; a clean release source revision still needs to be selected.
+- Full build duration, peak disk use, exact host firmware/acceleration and final file size were not supplied. Bootstrap timing alone is not total build time.
+- GitHub Actions manual integration workflow remains unrun; independent byte-for-byte rebuild comparison remains unrun.
+- No v0.2 tag, merge, uploaded release asset or public release has been created by this task.
