@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import { initializeLocaleMetadata } from "./composables/useLocale";
 import "./style.css";
-createApp(App).mount("#app");
-
 import "./effects.css";
+initializeLocaleMetadata();
+createApp(App).mount("#app");

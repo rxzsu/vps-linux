@@ -57,3 +57,9 @@ Release image and checksum links were verified against GitHub's v0.1 expanded-as
 The hero uses original CSS/SVG server layers, atmospheric aurora, drifting particles and animated circuit paths, inspired by the Vue Bits visual language. Feature cards use pointer-following spotlights. These are local implementations, with no Vue Bits source copied or added WebGL dependency. All continuous effects disable themselves under `prefers-reduced-motion`; touch devices do not run pointer tracking. Pointer updates are coalesced with `requestAnimationFrame` and listeners are removed on unmount.
 
 `bun run build` uses Vite directly. `vue-tsc` and its build gate were removed intentionally; production builds do not provide full Vue SFC type checking. TypeScript source and strict compiler configuration are retained. Run `bun outdated` to review available library updates and `bun run format:check` to check formatting.
+
+## English and Russian
+
+Use the always-visible **RU / EN** control in the header. Language selection follows this order: valid `?lang=ru` / `?lang=en` query parameter, saved preference, browser language (Russian for `ru-*`, English otherwise). A manual choice updates the URL without reloading and is saved locally when storage is available. The site remains functional when browser storage is blocked.
+
+UI copy, documentation, accessible labels, title and description metadata are localized; product names, shell commands and genuine terminal output retain their original spelling. `src/locales/ru.ts` holds the Russian dictionary using the English source text as keys. `src/composables/useLocale.ts` shares the reactive language across components. No backend or extra translation dependency is required. Browser tests cover both languages, persistence, explicit links, blocked storage and Russian layouts at widths from 320px to 1440px.

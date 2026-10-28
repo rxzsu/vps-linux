@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocale } from "../composables/useLocale";
+const { t } = useLocale();
 import { ref, onMounted, onUnmounted } from "vue";
 const lines = [
   ["$ cat /etc/os-release", 'PRETTY_NAME="Debian GNU/Linux 13 (trixie)"'],
@@ -28,9 +30,9 @@ onUnmounted(() => clearInterval(timer));
   <div class="terminal">
     <div class="terminal-bar">
       <div class="dots"><i></i><i></i><i></i></div>
-      <span>vps@linux: ~</span><span class="demo">DEMO</span>
+      <span>vps@linux: ~</span><span class="demo">{{ t("DEMO") }}</span>
     </div>
-    <div class="terminal-body" aria-label="Simulated terminal output">
+    <div class="terminal-body" :aria-label="t('Simulated terminal output')">
       <div
         v-for="(line, i) in lines.slice(0, count)"
         :key="i"
@@ -49,7 +51,8 @@ onUnmounted(() => clearInterval(timer));
       <span class="prompt">$ <span class="cursor">▍</span></span>
     </div>
     <div class="terminal-bottom">
-      <span><b>●</b> All systems ready</span><span>x86_64 / UEFI</span>
+      <span><b>●</b>{{ t("All systems ready") }}</span
+      ><span>x86_64 / UEFI</span>
     </div>
   </div>
 </template>

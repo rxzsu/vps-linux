@@ -103,3 +103,131 @@ test("renders the site, navigation, documentation and release links", async ({
     fullPage: true,
   });
 });
+
+test("switches between Russian and English and preserves the choice", async ({
+  page,
+}, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/?lang=ru#documentation");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page).toHaveTitle("VPS Linux — Твой сервер. Ничего лишнего.");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Твой сервер.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Русский", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    /Лёгкий образ Debian/,
+  );
+  await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute(
+    "content",
+    "ru_RU",
+  );
+  await expect(page.locator(".feature h3").first()).toHaveText(
+    "Контейнеры — сразу.",
+  );
+  await page
+    .locator("summary")
+    .filter({ hasText: "Скачивание и проверка" })
+    .click();
+  await expect(page.getByText("sha256sum -c", { exact: false })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Скопировать команду" }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Скачать v0.1" }).first(),
+  ).toHaveAttribute("href", /vps-linux-v0\.1-release\.qcow2$/);
+  await expect(page.locator(".terminal-bottom")).toContainText(
+    "Все системы готовы",
+  );
+  for (const width of [320, 390, 640, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      `Russian overflow at ${width}px`,
+    ).toBeTruthy();
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  const menu = page.getByRole("button", { name: "Открыть или закрыть меню" });
+  await menu.click();
+  await page
+    .getByRole("navigation")
+    .getByRole("link", { name: "Возможности", exact: true })
+    .click();
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  // Keyboard-accessible language controls remain available outside the mobile menu.
+  const english = page.getByRole("button", { name: "English", exact: true });
+  await english.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page).toHaveURL(/lang=en#features$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Your server.",
+  );
+  await expect(
+    page
+      .locator("summary")
+      .filter({ hasText: "Download & verify" })
+      .locator(".."),
+  ).toHaveAttribute("open", "");
+  await page.getByRole("button", { name: "Русский", exact: true }).click();
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  // An explicit shared language wins over a saved preference.
+  await page.goto("/?lang=en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute(
+    "content",
+    "en_US",
+  );
+  await page.goto("/?lang=ru");
+  for (const section of [
+    "#features",
+    "#architecture",
+    "#download",
+    "#documentation",
+  ]) {
+    await page.locator(section).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(500);
+  await page.screenshot({
+    path: `test-results/${info.project.name}-ru.png`,
+    fullPage: true,
+  });
+  expect(errors).toEqual([]);
+});
+
+test("uses browser Russian and works when local storage is blocked", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "language", { get: () => "ru-RU" });
+    Object.defineProperty(Storage.prototype, "getItem", {
+      value: () => {
+        throw new DOMException("Blocked", "SecurityError");
+      },
+    });
+    Object.defineProperty(Storage.prototype, "setItem", {
+      value: () => {
+        throw new DOMException("Blocked", "SecurityError");
+      },
+    });
+  });
+  await page.goto("/?lang=invalid");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Your server.",
+  );
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});

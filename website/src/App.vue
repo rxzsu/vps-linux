@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { motion, useReducedMotion } from "motion-v";
 import {
   ArrowUpRight,
@@ -19,93 +19,119 @@ import {
   ChevronRight,
   TerminalSquare,
 } from "@lucide/vue";
+import { useLocale } from "./composables/useLocale";
 import Terminal from "./components/Terminal.vue";
 import Atmosphere from "./components/Atmosphere.vue";
 import ServerCore from "./components/ServerCore.vue";
 import { useSpotlight } from "./composables/useSpotlight";
 useSpotlight();
+const { locale, t, setLocale } = useLocale();
 const menu = ref(false);
 const reduced = useReducedMotion();
 const repo = "https://github.com/rxzsu/vps-linux";
 const release = `${repo}/releases/tag/v0.1`;
 const asset = `${repo}/releases/download/v0.1/vps-linux-v0.1-release.qcow2`;
-const features = [
+const features = computed(() => [
   {
     icon: Box,
-    title: "Containers, out of the box.",
-    text: "Docker Engine and Compose V2. A clean foundation for the services you want to run.",
-    label: "01 / CONTAINERS",
+    title: t("Containers, out of the box."),
+    text: t(
+      "Docker Engine and Compose V2. A clean foundation for the services you want to run.",
+    ),
+    label: t("01 / CONTAINERS"),
     wide: true,
   },
   {
     icon: Cloud,
-    title: "First boot. Your rules.",
-    text: "Use cloud-init to provision your instance and supply your SSH public key.",
-    label: "02 / PROVISIONING",
+    title: t("First boot. Your rules."),
+    text: t(
+      "Use cloud-init to provision your instance and supply your SSH public key.",
+    ),
+    label: t("02 / PROVISIONING"),
   },
   {
     icon: KeyRound,
-    title: "Keys are the default.",
-    text: "Public-key SSH authentication. Password authentication and direct root SSH login disabled.",
-    label: "03 / ACCESS",
+    title: t("Keys are the default."),
+    text: t(
+      "Public-key SSH authentication. Password authentication and direct root SSH login disabled.",
+    ),
+    label: t("03 / ACCESS"),
   },
   {
     icon: MemoryStick,
-    title: "Make room for more.",
-    text: "1 GiB ZRAM with LZ4 compression, alongside a focused Debian 13 base.",
-    label: "04 / MEMORY",
+    title: t("Make room for more."),
+    text: t(
+      "1 GiB ZRAM with LZ4 compression, alongside a focused Debian 13 base.",
+    ),
+    label: t("04 / MEMORY"),
   },
   {
     icon: Cpu,
-    title: "At home in a VM.",
-    text: "QCOW2 for QEMU/KVM. UEFI boot with GRUB and an 8 GiB virtual disk.",
-    label: "05 / VIRTUALIZATION",
+    title: t("At home in a VM."),
+    text: t(
+      "QCOW2 for QEMU/KVM. UEFI boot with GRUB and an 8 GiB virtual disk.",
+    ),
+    label: t("05 / VIRTUALIZATION"),
     wide: true,
   },
-];
-const layers = [
-  { icon: Cpu, title: "QEMU / KVM", sub: "Virtual hardware" },
-  { icon: Layers, title: "UEFI / GRUB", sub: "Boot foundation" },
+]);
+const layers = computed(() => [
+  { icon: Cpu, title: "QEMU / KVM", sub: t("Virtual hardware") },
+  { icon: Layers, title: "UEFI / GRUB", sub: t("Boot foundation") },
   { icon: TerminalSquare, title: "Debian 13", sub: "Linux 6.12" },
   {
     icon: Cloud,
     title: "systemd + cloud-init",
-    sub: "Services & provisioning",
+    sub: t("Services & provisioning"),
   },
-  { icon: Box, title: "Docker workloads", sub: "Your next deployment" },
-];
-const docs = [
+  { icon: Box, title: t("Docker workloads"), sub: t("Your next deployment") },
+]);
+const docs = computed(() => [
   {
-    title: "Overview & requirements",
-    text: "VPS Linux v0.1 is an independent Debian 13 (Trixie), x86_64 image. Use QEMU/KVM-compatible virtualization with UEFI support. The tested configuration is 2 vCPUs and 2 GiB RAM; the image has an 8 GiB virtual disk.",
+    title: t("Overview & requirements"),
+    text: t(
+      "VPS Linux v0.1 is an independent Debian 13 (Trixie), x86_64 image. Use QEMU/KVM-compatible virtualization with UEFI support. The tested configuration is 2 vCPUs and 2 GiB RAM; the image has an 8 GiB virtual disk.",
+    ),
   },
   {
-    title: "Download & verify",
-    text: "Download the QCOW2 image and its SHA256 file from the same v0.1 GitHub release. In the download directory, verify the image before importing it:",
+    title: t("Download & verify"),
+    text: t(
+      "Download the QCOW2 image and its SHA256 file from the same v0.1 GitHub release. In the download directory, verify the image before importing it:",
+    ),
     code: "sha256sum -c vps-linux-v0.1-release.qcow2.sha256",
   },
   {
-    title: "Boot with QEMU/KVM",
-    text: "Import the QCOW2 disk into a QEMU/KVM virtual machine. Configure UEFI firmware, 2 virtual CPUs and 2 GiB memory. Attach your cloud-init NoCloud data source before first boot. Exact QEMU flags and firmware paths depend on the host; the project has not published a verified launch command.",
+    title: t("Boot with QEMU/KVM"),
+    text: t(
+      "Import the QCOW2 disk into a QEMU/KVM virtual machine. Configure UEFI firmware, 2 virtual CPUs and 2 GiB memory. Attach your cloud-init NoCloud data source before first boot. Exact QEMU flags and firmware paths depend on the host; the project has not published a verified launch command.",
+    ),
   },
   {
-    title: "cloud-init & SSH provisioning",
-    text: "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. A verified user-data template and default login username are not yet documented; confirm these before deployment.",
+    title: t("cloud-init & SSH provisioning"),
+    text: t(
+      "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. A verified user-data template and default login username are not yet documented; confirm these before deployment.",
+    ),
   },
   {
-    title: "Docker & Compose",
-    text: "The image includes Docker Engine and Docker Compose V2. After logging into the instance, inspect the installed versions and daemon status. Docker permissions depend on the provisioned user.",
+    title: t("Docker & Compose"),
+    text: t(
+      "The image includes Docker Engine and Docker Compose V2. After logging into the instance, inspect the installed versions and daemon status. Docker permissions depend on the provisioned user.",
+    ),
     code: "docker --version\ndocker compose version\nsystemctl is-active docker",
   },
   {
-    title: "Networking & security",
-    text: "systemd-networkd provides DHCP networking; systemd-resolved handles DNS and systemd-timesyncd handles time synchronization. SSH key authentication is a starting point: review updates, firewall rules and workload exposure for your own deployment.",
+    title: t("Networking & security"),
+    text: t(
+      "systemd-networkd provides DHCP networking; systemd-resolved handles DNS and systemd-timesyncd handles time synchronization. SSH key authentication is a starting point: review updates, firewall rules and workload exposure for your own deployment.",
+    ),
   },
   {
-    title: "Known limitations",
-    text: "v0.1 was assembled and tested manually. Reproducible build scripts and an automated image build pipeline are not available. Cloud providers must support custom QCOW2 import or a compatible conversion workflow. Compatibility with every provider is not guaranteed.",
+    title: t("Known limitations"),
+    text: t(
+      "v0.1 was assembled and tested manually. Reproducible build scripts and an automated image build pipeline are not available. Cloud providers must support custom QCOW2 import or a compatible conversion workflow. Compatibility with every provider is not guaranteed.",
+    ),
   },
-];
+]);
 const copied = ref("");
 async function copy(code: string) {
   try {
@@ -113,16 +139,16 @@ async function copy(code: string) {
     copied.value = code;
     setTimeout(() => (copied.value = ""), 2000);
   } catch {
-    copied.value = "Clipboard unavailable. Select the command to copy.";
+    copied.value = "error";
   }
 }
 </script>
 
 <template>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="skip" href="#main">{{ t("Skip to content") }}</a>
   <header>
-    <nav class="nav shell" aria-label="Main navigation">
-      <a class="brand" href="#" aria-label="VPS Linux home"
+    <nav class="nav shell" :aria-label="t('Main navigation')">
+      <a class="brand" href="#" :aria-label="t('VPS Linux home')"
         ><svg viewBox="0 0 40 40" aria-hidden="true">
           <path d="m6 10 14 23 14-23M13 10l7 12 7-12" /></svg
         ><span
@@ -131,19 +157,47 @@ async function copy(code: string) {
         ></a
       >
       <div class="nav-links" :class="{ open: menu }">
-        <a href="#features" @click="menu = false">Features</a
-        ><a href="#architecture" @click="menu = false">Architecture</a
-        ><a href="#documentation" @click="menu = false">Documentation</a
+        <a href="#features" @click="menu = false">{{ t("Features") }}</a
+        ><a href="#architecture" @click="menu = false">{{
+          t("Architecture")
+        }}</a
+        ><a href="#documentation" @click="menu = false">{{
+          t("Documentation")
+        }}</a
         ><a :href="repo" @click="menu = false"
           >GitHub <ArrowUpRight :size="13"
         /></a>
       </div>
+      <div
+        class="language-switch"
+        role="group"
+        :aria-label="t('Site language')"
+      >
+        <button
+          type="button"
+          lang="ru"
+          aria-label="Русский"
+          :aria-pressed="locale === 'ru'"
+          @click="setLocale('ru')"
+        >
+          RU
+        </button>
+        <button
+          type="button"
+          lang="en"
+          aria-label="English"
+          :aria-pressed="locale === 'en'"
+          @click="setLocale('en')"
+        >
+          EN
+        </button>
+      </div>
       <a class="nav-download" href="#download"
-        >Get VPS Linux <ArrowUpRight :size="15" /></a
+        >{{ t("Get VPS Linux") }}<ArrowUpRight :size="15" /></a
       ><button
         class="menu-toggle"
         :aria-expanded="menu"
-        aria-label="Toggle navigation"
+        :aria-label="t('Toggle navigation')"
         @click="menu = !menu"
       >
         <X v-if="menu" /><Menu v-else />
@@ -159,34 +213,37 @@ async function copy(code: string) {
         :transition="{ duration: 0.65 }"
         class="hero-copy"
         ><a class="release-pill" :href="release"
-          ><span class="status-dot"></span> VPS Linux v0.1 is here
-          <span class="pill-divider"></span> Meet the release
-          <ArrowRight :size="13"
+          ><span class="status-dot"></span>{{ t("VPS Linux v0.1 is here")
+          }}<span class="pill-divider"></span>{{ t("Meet the release")
+          }}<ArrowRight :size="13"
         /></a>
         <div class="eyebrow hero-eyebrow">
-          A SMALLER FOUNDATION. A BIGGER POSSIBILITY.
+          {{ t("A SMALLER FOUNDATION. A BIGGER POSSIBILITY.") }}
         </div>
         <h1>
-          Your server.<br /><span class="gradient-text"
-            >Nothing<br class="hero-title-break" />
-            unnecessary.</span
+          {{ t("Your server.") }}<br /><span class="gradient-text"
+            >{{ t("Nothing") }}<br class="hero-title-break" />
+            {{ t("unnecessary.") }}</span
           >
         </h1>
         <p class="hero-description">
-          A lightweight Debian-powered Linux image for virtual servers, Docker
-          workloads, and clean infrastructure.<br class="desktop-break" />
-          Minimal by design. Ready to build on.
+          {{
+            t(
+              "A lightweight Debian-powered Linux image for virtual servers, Docker workloads, and clean infrastructure. Minimal by design. Ready to build on.",
+            )
+          }}
         </p>
         <div class="hero-actions">
           <a class="button primary" :href="asset"
-            ><Download :size="17" /> Download v0.1
-            <ArrowUpRight :size="16" /></a
+            ><Download :size="17" />{{ t("Download v0.1")
+            }}<ArrowUpRight :size="16" /></a
           ><a class="button secondary" :href="repo"
-            ><Github :size="17" /> Explore on GitHub</a
+            ><Github :size="17" />{{ t("Explore on GitHub") }}</a
           >
         </div>
         <div class="hero-meta">
-          <span><Check /> Debian 13</span><span><Check /> Docker ready</span
+          <span><Check /> Debian 13</span
+          ><span><Check />{{ t("Docker ready") }}</span
           ><span><Check /> Cloud-init</span><span><Check /> QEMU/KVM</span>
         </div></motion.div
       >
@@ -196,16 +253,17 @@ async function copy(code: string) {
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.8, delay: 0.2 }"
         ><div class="visual-label">
-          <span class="status-dot"></span> LESS OVERHEAD. MORE CONTROL.
+          <span class="status-dot"></span
+          >{{ t("LESS OVERHEAD. MORE CONTROL.") }}
         </div>
         <ServerCore /><Terminal />
         <div class="visual-caption">
-          <span>Purpose-built for the work that matters.</span
-          ><span>01 — FOUNDATION</span>
+          <span>{{ t("Purpose-built for the work that matters.") }}</span
+          ><span>{{ t("01 — FOUNDATION") }}</span>
         </div></motion.div
       >
       <div class="hero-bottom">
-        <span>THE ESSENTIALS. ALREADY IN PLACE.</span>
+        <span>{{ t("THE ESSENTIALS. ALREADY IN PLACE.") }}</span>
         <div>
           <span>debian <b>13</b></span
           ><span><Box :size="19" /> Docker</span
@@ -217,20 +275,25 @@ async function copy(code: string) {
     <section id="features" class="section shell">
       <div class="section-intro">
         <div>
-          <div class="eyebrow">01 / THE FOUNDATION</div>
+          <div class="eyebrow">{{ t("01 / THE FOUNDATION") }}</div>
           <h2>
-            Everything you need.<br /><span>Space for what you build.</span>
+            {{ t("Everything you need.") }}<br /><span>{{
+              t("Space for what you build.")
+            }}</span>
           </h2>
         </div>
         <p>
-          No desktop. No unnecessary layers.<br />Just a focused set of tools
-          for a server<br />that feels like your own.
+          {{
+            t(
+              "No desktop. No unnecessary layers. Just a focused set of tools for a server that feels like your own.",
+            )
+          }}
         </p>
       </div>
       <div class="feature-grid">
         <motion.article
-          v-for="feature in features"
-          :key="feature.title"
+          v-for="(feature, i) in features"
+          :key="i"
           :class="['feature', { wide: feature.wide }]"
           :initial="reduced ? false : { opacity: 0, y: 18 }"
           :while-in-view="{ opacity: 1, y: 0 }"
@@ -250,12 +313,14 @@ async function copy(code: string) {
             class="container-blocks"
             aria-hidden="true"
           >
-            <span>app</span><span>api</span><span>database</span
-            ><span>your idea</span>
+            <span>{{ t("app") }}</span
+            ><span>{{ t("api") }}</span
+            ><span>{{ t("database") }}</span
+            ><span>{{ t("your idea") }}</span>
           </div>
           <div v-if="feature.label.startsWith('05')" class="vm-spec">
             <span>x86_64</span><span>UEFI</span><span>QCOW2</span
-            ><span>8 GiB disk</span>
+            ><span>{{ t("8 GiB disk") }}</span>
           </div></motion.article
         >
       </div>
@@ -264,19 +329,26 @@ async function copy(code: string) {
       <div class="shell">
         <div class="section-intro">
           <div>
-            <div class="eyebrow">02 / UNDER THE HOOD</div>
-            <h2>A clear path.<br /><span>From boot to workload.</span></h2>
+            <div class="eyebrow">{{ t("02 / UNDER THE HOOD") }}</div>
+            <h2>
+              {{ t("A clear path.") }}<br /><span>{{
+                t("From boot to workload.")
+              }}</span>
+            </h2>
           </div>
           <p>
-            Familiar components. Deliberate choices.<br />A stack you can
-            understand<br />and make your own.
+            {{
+              t(
+                "Familiar components. Deliberate choices. A stack you can understand and make your own.",
+              )
+            }}
           </p>
         </div>
         <div class="architecture-flow">
           <div class="architecture-beam" aria-hidden="true"></div>
           <motion.div
             v-for="(layer, i) in layers"
-            :key="layer.title"
+            :key="i"
             class="layer"
             :initial="reduced ? false : { opacity: 0, y: 15 }"
             :while-in-view="{ opacity: 1, y: 0 }"
@@ -291,92 +363,108 @@ async function copy(code: string) {
         </div>
         <div class="architecture-note">
           <span class="status-dot"></span> Debian 13 (Trixie)
-          <span>/</span> Linux 6.12 <span>/</span> No hidden complexity
+          <span>/</span> Linux 6.12 <span>/</span
+          >{{ t("No hidden complexity") }}
         </div>
       </div>
     </section>
     <section class="philosophy shell section">
-      <div class="eyebrow">03 / THE PHILOSOPHY</div>
+      <div class="eyebrow">{{ t("03 / THE PHILOSOPHY") }}</div>
       <div class="philosophy-content">
-        <h2>Built to run services.<br /><span>Not distractions.</span></h2>
+        <h2>
+          {{ t("Built to run services.") }}<br /><span>{{
+            t("Not distractions.")
+          }}</span>
+        </h2>
         <div>
           <p>
-            Infrastructure should give you a starting point, then get out of
-            your way.
+            {{
+              t(
+                "Infrastructure should give you a starting point, then get out of your way.",
+              )
+            }}
           </p>
           <p>
-            VPS Linux keeps the base minimal, the configuration predictable, and
-            the decisions in your hands. For your homelab, your next container
-            stack, or a clean place to experiment.
+            {{
+              t(
+                "VPS Linux keeps the base minimal, the configuration predictable, and the decisions in your hands. For your homelab, your next container stack, or a clean place to experiment.",
+              )
+            }}
           </p>
           <a :href="repo"
-            >Open source. Open possibilities. <ArrowUpRight :size="17"
+            >{{ t("Open source. Open possibilities.")
+            }}<ArrowUpRight :size="17"
           /></a>
         </div>
       </div>
       <div class="principles">
-        <span><span>01</span> Minimal by design</span
-        ><span><span>02</span> Predictable by default</span
-        ><span><span>03</span> Yours to control</span>
+        <span><span>01</span>{{ t("Minimal by design") }}</span
+        ><span><span>02</span>{{ t("Predictable by default") }}</span
+        ><span><span>03</span>{{ t("Yours to control") }}</span>
       </div>
     </section>
     <section id="download" class="shell section">
       <div class="download-panel">
         <div>
           <div class="eyebrow">
-            <span class="status-dot"></span> AVAILABLE NOW / v0.1
+            <span class="status-dot"></span>{{ t("AVAILABLE NOW / v0.1") }}
           </div>
-          <h2>Your next deployment<br />starts with a clean slate.</h2>
-          <p>Get the image. Bring your ideas.</p>
+          <h2>
+            {{ t("Your next deployment") }}<br />{{
+              t("starts with a clean slate.")
+            }}
+          </h2>
+          <p>{{ t("Get the image. Bring your ideas.") }}</p>
           <div class="download-specs">
             <span>Debian 13</span><span>x86_64</span><span>QCOW2</span
-            ><span>8 GiB virtual disk</span>
+            ><span>{{ t("8 GiB virtual disk") }}</span>
           </div>
           <div class="hero-actions">
             <a class="button primary" :href="asset"
-              ><Download :size="18" /> Download v0.1
-              <ArrowUpRight :size="16" /></a
+              ><Download :size="18" />{{ t("Download v0.1")
+              }}<ArrowUpRight :size="16" /></a
             ><a class="checksum" :href="`${asset}.sha256`"
-              >SHA256 checksum <ArrowUpRight :size="14"
+              >{{ t("SHA256 checksum") }}<ArrowUpRight :size="14"
             /></a>
           </div>
           <p class="download-note">
-            For QEMU/KVM. Cloud providers require custom QCOW2 import<br />or a
-            compatible conversion workflow.
+            {{ t("For QEMU/KVM. Cloud providers require custom QCOW2 import")
+            }}<br />{{ t("or a compatible conversion workflow.") }}
           </p>
         </div>
         <div class="release-manifest">
           <div>
-            <span>RELEASE MANIFEST</span><span class="version-tag">v0.1</span>
+            <span>{{ t("RELEASE MANIFEST") }}</span
+            ><span class="version-tag">v0.1</span>
           </div>
           <dl>
             <div>
-              <dt>Distribution</dt>
+              <dt>{{ t("Distribution") }}</dt>
               <dd>Debian 13 / Trixie</dd>
             </div>
             <div>
-              <dt>Kernel</dt>
+              <dt>{{ t("Kernel") }}</dt>
               <dd>Linux 6.12</dd>
             </div>
             <div>
-              <dt>Architecture</dt>
+              <dt>{{ t("Architecture") }}</dt>
               <dd>x86_64</dd>
             </div>
             <div>
-              <dt>Boot</dt>
+              <dt>{{ t("Boot") }}</dt>
               <dd>UEFI + GRUB</dd>
             </div>
             <div>
-              <dt>Tested VM</dt>
-              <dd>2 vCPU / 2 GiB RAM</dd>
+              <dt>{{ t("Tested VM") }}</dt>
+              <dd>{{ t("2 vCPU / 2 GiB RAM") }}</dd>
             </div>
             <div>
-              <dt>Build process</dt>
-              <dd>Manually assembled</dd>
+              <dt>{{ t("Build process") }}</dt>
+              <dd>{{ t("Manually assembled") }}</dd>
             </div>
           </dl>
           <a :href="release"
-            >Read the release notes <ArrowUpRight :size="16"
+            >{{ t("Read the release notes") }}<ArrowUpRight :size="16"
           /></a>
         </div>
       </div>
@@ -384,16 +472,23 @@ async function copy(code: string) {
     <section id="documentation" class="shell section documentation">
       <div class="section-intro">
         <div>
-          <div class="eyebrow">04 / GET STARTED</div>
-          <h2>A little context.<br /><span>A confident first boot.</span></h2>
+          <div class="eyebrow">{{ t("04 / GET STARTED") }}</div>
+          <h2>
+            {{ t("A little context.") }}<br /><span>{{
+              t("A confident first boot.")
+            }}</span>
+          </h2>
         </div>
         <p>
-          The essentials for working with v0.1.<br />Start here, then make it
-          yours.
+          {{
+            t(
+              "The essentials for working with v0.1. Start here, then make it yours.",
+            )
+          }}
         </p>
       </div>
       <div class="docs-list">
-        <details v-for="(doc, i) in docs" :key="doc.title" :open="i === 0">
+        <details v-for="(doc, i) in docs" :key="i" :open="i === 0">
           <summary>
             <span class="doc-number">0{{ i + 1 }}</span
             >{{ doc.title }}<ChevronRight :size="19" />
@@ -405,7 +500,7 @@ async function copy(code: string) {
               <button
                 @click="copy(doc.code)"
                 :aria-label="
-                  copied === doc.code ? 'Command copied' : 'Copy command'
+                  copied === doc.code ? t('Command copied') : t('Copy command')
                 "
               >
                 <Check v-if="copied === doc.code" :size="16" /><Copy
@@ -420,9 +515,9 @@ async function copy(code: string) {
       <p class="sr-only" role="status">
         {{
           copied
-            ? copied.startsWith("Clipboard")
-              ? copied
-              : "Command copied"
+            ? copied === "error"
+              ? t("Clipboard unavailable. Select the command to copy.")
+              : t("Command copied")
             : ""
         }}
       </p>
@@ -438,18 +533,18 @@ async function copy(code: string) {
           ><span class="brand-dot">.</span></span
         ></a
       >
-      <p>Less overhead. More control.</p>
+      <p>{{ t("Less overhead. More control.") }}</p>
       <div>
         <a :href="repo">GitHub <ArrowUpRight :size="13" /></a
-        ><a :href="release">Releases</a
-        ><a href="#documentation">Documentation</a
-        ><a :href="`${repo}/blob/main/LICENSE`">MIT License</a>
+        ><a :href="release">{{ t("Releases") }}</a
+        ><a href="#documentation">{{ t("Documentation") }}</a
+        ><a :href="`${repo}/blob/main/LICENSE`">{{ t("MIT License") }}</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>An independent, open-source Linux project.</span
+      <span>{{ t("An independent, open-source Linux project.") }}</span
       ><span><span class="status-dot"></span> VPS Linux v0.1</span
-      ><a href="#">Back to top ↑</a>
+      ><a href="#">{{ t("Back to top ↑") }}</a>
     </div>
   </footer>
 </template>

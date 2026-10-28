@@ -1086,3 +1086,141 @@ footer {
   transform: perspective(1400px) rotateX(35deg) rotateZ(-12deg);
   transform-origin: center top;
 }
+/* Both languages share the same navigation and content layout. */
+.language-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  flex-shrink: 0;
+  border: 1px solid #93b4ce33;
+  border-radius: 7px;
+  background: #111d2a;
+}
+.language-switch button {
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #a6b8ca;
+  min-width: 31px;
+  min-height: 29px;
+  font:
+    600 10px ui-monospace,
+    monospace;
+}
+.language-switch button[aria-pressed="true"] {
+  background: #a1f2db;
+  color: #10272b;
+  box-shadow: 0 1px 6px #0003;
+}
+.language-switch button:hover:not([aria-pressed="true"]) {
+  color: #e3f8f2;
+  background: #ffffff09;
+}
+.nav {
+  gap: 22px;
+}
+.nav-links {
+  gap: 21px;
+}
+.section-intro > p {
+  max-width: 310px;
+}
+.container-blocks {
+  flex-wrap: wrap;
+}
+.layer h3 {
+  white-space: normal;
+}
+:lang(ru) .hero-title-break {
+  display: block;
+}
+:lang(ru) .hero-eyebrow {
+  letter-spacing: 1px;
+}
+:lang(ru) .hero-description {
+  max-width: 465px;
+}
+:lang(ru) .hero-copy .button {
+  font-size: 11px;
+}
+:lang(ru) .philosophy h2 {
+  font-size: 42px;
+}
+@media (max-width: 1120px) {
+  .nav {
+    gap: 16px;
+  }
+  .nav-links {
+    gap: 15px;
+    font-size: 11px;
+  }
+  .nav-download {
+    font-size: 10px;
+    padding-inline: 10px;
+  }
+  :lang(ru) .nav-download {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 82px;
+    left: 0;
+    right: 0;
+    padding: 24px 28px;
+    background: #0f1a22;
+    border-bottom: 1px solid #2b4048;
+    flex-direction: column;
+    gap: 22px;
+    font-size: 14px;
+  }
+  .nav-links.open {
+    display: flex;
+  }
+  .menu-toggle {
+    display: flex;
+    border: 0;
+    padding: 4px;
+    background: none;
+  }
+  .language-switch {
+    margin-left: auto;
+  }
+  .nav-download {
+    margin-left: 0;
+  }
+}
+@media (max-width: 640px) {
+  .nav-links {
+    top: 68px;
+  }
+  .nav-download {
+    display: none;
+  }
+  .nav {
+    gap: 14px;
+  }
+  .language-switch {
+    gap: 1px;
+    padding: 2px;
+  }
+  .language-switch button {
+    min-width: 30px;
+    min-height: 29px;
+  }
+  :lang(ru) .hero h1 {
+    font-size: clamp(43px, 11vw, 64px);
+  }
+  :lang(ru) .philosophy h2 {
+    font-size: 31px;
+  }
+  :lang(ru) .hero-copy .button {
+    font-size: 10px;
+  }
+  .section-intro > p {
+    max-width: none;
+  }
+}

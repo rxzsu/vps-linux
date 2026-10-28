@@ -65,3 +65,5 @@ bun run test
 ```
 
 See [website/README.md](website/README.md) for deployment and validation.
+
+The website supports English and Russian. Use the header's **RU / EN** switch, or link directly to `?lang=ru` and `?lang=en`.

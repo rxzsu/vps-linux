@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { useLocale } from "../composables/useLocale";
+const { t } = useLocale();
+</script>
 <template>
   <div class="server-scene" aria-hidden="true">
     <div class="orbit orbit-outer"></div>
@@ -34,7 +38,8 @@
     <div class="server-stack">
       <div class="server-slab slab-bottom">
         <div class="slab-face">
-          <span>VIRTUAL HARDWARE</span><i></i><i></i><i></i>
+          <span>{{ t("VIRTUAL HARDWARE") }}</span
+          ><i></i><i></i><i></i>
         </div>
       </div>
       <div class="server-slab slab-middle">
@@ -49,15 +54,16 @@
           ><span>VPS LINUX</span>
         </div>
         <div class="slab-face">
-          <span>YOUR NEXT DEPLOYMENT</span><i></i><i></i><i></i>
+          <span>{{ t("YOUR NEXT DEPLOYMENT") }}</span
+          ><i></i><i></i><i></i>
         </div>
       </div>
     </div>
     <div class="scene-tag scene-tag-left">
-      <span class="status-dot"></span> MINIMAL BASE
+      <span class="status-dot"></span>{{ t("MINIMAL BASE") }}
     </div>
     <div class="scene-tag scene-tag-right">
-      <span class="status-dot"></span> MAXIMUM POSSIBILITY
+      <span class="status-dot"></span>{{ t("MAXIMUM POSSIBILITY") }}
     </div>
     <div class="scene-coordinate">SYS.01 <span> // </span> x86_64</div>
   </div>
