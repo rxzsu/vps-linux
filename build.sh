@@ -48,6 +48,9 @@ run_stage() {
     wait "$active_pid"
     active_pid=''
 }
+install -m444 -- "$VPS_LINUX_VPSCTL_DEB" "$VPS_LINUX_WORK/vpsctl.deb"
+python3 "$PROJECT_DIR/scripts/vpsctl_package.py" --source "$PROJECT_DIR" --package "$VPS_LINUX_WORK/vpsctl.deb" --json > "$VPS_LINUX_WORK/vpsctl.json"
+export VPS_LINUX_VPSCTL_DEB="$VPS_LINUX_WORK/vpsctl.deb"
 mkdir -m 700 "$VPS_LINUX_WORK/release" "$VPS_LINUX_WORK/gnupg"
 export GNUPGHOME="$VPS_LINUX_WORK/gnupg"
 export TMPDIR="$VPS_LINUX_WORK"

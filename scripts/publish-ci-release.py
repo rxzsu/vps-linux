@@ -2,6 +2,7 @@
 """Publish only a fully tested manual main-branch CI build; never overwrite a tag."""
 import argparse
 import datetime
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -86,6 +87,8 @@ def main():
     require_absent(plan, token)
     # Creating the ref explicitly fails atomically if another publisher created it first.
     api('git/refs', token, payload={'ref': 'refs/tags/' + plan['tag'], 'sha': plan['commit']})
+    utility = metadata.get('vpsctl')
+    utility_note = f"vpsctl {utility['version']} is installed in the image; its source-bound Debian package is included." if utility else ''
     with tempfile.TemporaryDirectory(prefix='vps-ci-release-') as directory:
         work = Path(directory)
         notes = work / 'notes.md'
@@ -95,6 +98,7 @@ def main():
 
 Debian 13 amd64 server image, UEFI/GRUB, 8 GiB QCOW2, NoCloud key provisioning,
 Docker/Compose V2, QEMU Guest Agent, security-only unattended upgrades and bounded logs.
+{utility_note}
 
 The workflow passed static/integrity regressions, two independent guest boots,
 Guest Agent RPC, 8-to-10 GiB root/GPT growth, effective security/log policy,
@@ -117,6 +121,8 @@ The build-time `boot_smoke_test: not_run` predates the subsequent acceptance run
             'recorded_utc': datetime.datetime.now(datetime.timezone.utc).isoformat()}, indent=2) + '\n')
         names = ['vps-linux-v' + plan['version'] + '.qcow2', 'vps-linux-v' + plan['version'] + '.qcow2.sha256',
                  'SHA256SUMS', 'build.json', 'packages.tsv', 'sbom.spdx.json', 'SHA256SUMS.sigstore.json']
+        if utility:
+            names.append(utility['package_file'])
         command = ['gh', 'release', 'create', plan['tag'], '--repo', REPOSITORY, '--verify-tag', '--draft',
                    '--title', 'VPS Linux ' + plan['tag'], '--notes-file', str(notes)]
         if plan['prerelease']:
@@ -124,8 +130,13 @@ The build-time `boot_smoke_test: not_run` predates the subsequent acceptance run
         subprocess.run(command + [str(bundle / name) for name in names] + [str(report)], check=True)
         downloaded = work / 'download'
         downloaded.mkdir()
-        subprocess.run(['gh', 'release', 'download', plan['tag'], '--repo', REPOSITORY, '--dir', str(downloaded),
-                        '--pattern', names[0], '--pattern', names[1]], check=True)
+        download = ['gh', 'release', 'download', plan['tag'], '--repo', REPOSITORY, '--dir', str(downloaded),
+                    '--pattern', names[0], '--pattern', names[1]]
+        if utility:
+            download += ['--pattern', utility['package_file']]
+        subprocess.run(download, check=True)
+        if utility and hashlib.sha256((downloaded / utility['package_file']).read_bytes()).hexdigest() != utility['package_sha256']:
+            raise ValueError('Uploaded vpsctl package differs from tested artifact')
         # Compare the uploaded checksum with the independently validated artifact copy.
         if (downloaded / names[1]).read_bytes() != (bundle / names[1]).read_bytes():
             raise ValueError('Uploaded checksum differs from the tested artifact')

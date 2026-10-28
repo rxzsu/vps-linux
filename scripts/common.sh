@@ -45,9 +45,13 @@ preflight_build() {
     if ! { [[ $ID == debian && ${VERSION_ID%%.*} == 13 ]] || [[ ${UBUNTU_CODENAME:-${VERSION_CODENAME:-}} == noble ]]; }; then
         log 'Supported hosts: Debian 13 or Ubuntu 24.04 / Zorin based on Noble.'; failed=1
     fi
-    for tool in mmdebstrap unshare guestfish virt-customize qemu-img python3 gpg flock realpath git stat df setsid timeout tail systemctl; do
+    for tool in mmdebstrap unshare guestfish virt-customize qemu-img python3 gpg flock realpath git stat df setsid timeout tail systemctl dpkg-deb; do
         command -v "$tool" >/dev/null || { log "Missing tool: $tool (see docs/building.md)"; failed=1; }
     done
+    if ! VPS_LINUX_VPSCTL_DEB=$(python3 "$PROJECT_DIR/scripts/vpsctl_package.py" --source "$PROJECT_DIR"); then
+        log 'Build the source-bound vpsctl package before building an image.'; failed=1
+    fi
+    export VPS_LINUX_VPSCTL_DEB
     [[ ! -L $OUTPUT_DIR ]] || { log 'output/ must not be a symbolic link.'; failed=1; }
     if ! python3 - "$PROJECT_DIR" <<'PY_CONFIG'
 import configparser, json, pathlib, re, sys

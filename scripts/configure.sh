@@ -7,6 +7,12 @@ require_work
 [[ $# == 1 ]] || die 'configure.sh is an internal bootstrap hook.'
 root=$(realpath -e -- "$1")
 [[ $root == "$VPS_LINUX_WORK"/* && $root != / && -f $root/etc/debian_version ]] || die 'Unsafe bootstrap root.'
+# Install the validated snapshot into dpkg's database, not just a loose binary.
+install -m644 "$VPS_LINUX_VPSCTL_DEB" "$root/tmp/vpsctl.deb"
+chroot "$root" dpkg -i /tmp/vpsctl.deb
+rm -f "$root/tmp/vpsctl.deb"
+chroot "$root" vpsctl --version
+chroot "$root" vpsctl status --json >/dev/null
 install -Dm644 "$PROJECT_DIR/configs/cloud-init/99-vps-linux.cfg" "$root/etc/cloud/cloud.cfg.d/99-vps-linux.cfg"
 install -Dm644 "$PROJECT_DIR/configs/ssh/00-vps-linux.conf" "$root/etc/ssh/sshd_config.d/00-vps-linux.conf"
 install -Dm644 "$PROJECT_DIR/configs/network/10-vps-linux.network" "$root/etc/systemd/network/10-vps-linux.network"

@@ -1,8 +1,8 @@
-# vpsctl 0.2.0
+# vpsctl 0.4.0
 
 A first-party, read-only VPS Linux control center. Rust 2024, MSRV **1.99.0**,
 Linux x86_64 / Debian 13. Utility versioning is separate from the image.
-It is not yet included in image builds; the v0.3 pipeline/releases are unchanged.
+It is included in the VPS Linux v0.4 candidate as a validated Debian package. Existing published images are unchanged.
 
 ## Build, install and package
 
@@ -27,7 +27,7 @@ Build a versioned amd64 Debian package without root:
 ./scripts/package-deb.sh
 python3 tests/package_deb.py
 # Optional system installation, only when you explicitly want it:
-sudo apt install ./dist/vpsctl_0.2.0_amd64.deb
+sudo apt install ./dist/vpsctl_0.4.0_amd64.deb
 ```
 
 Packaging compiles the explicit `x86_64-unknown-linux-gnu` target with Rust 1.99.0.
@@ -117,7 +117,7 @@ Exit 1: at least one failed diagnostic (takes precedence over unknown/warning).
 Exit 2: incomplete/warning diagnostics, usage, noninteractive TUI or I/O error.
 A successful status/info/network command does not certify host health; inspect
 nulls. Coverage gaps commonly make doctor/security exit 2. Parse JSON IDs/levels,
-not human prose. Existing schema-1 commands/fields remain compatible in 0.2.0.
+not human prose. Existing schema-1 commands/fields remain compatible. `info.utility_package_source_commit` reports the installed package source commit only when its version matches this utility, or null if unavailable.
 
 ## Safety and limits
 
@@ -163,11 +163,14 @@ The separate `Validate vpsctl` CI runs on the exact MSRV, caches Cargo downloads
 builds and uploads the `.deb`. See [actual validation](VALIDATION.md). PTY tests
 exercise navigation including Network, refresh, resize and terminal restoration.
 Package tests inspect/extract without installing; they do not prove clean-guest
-installation. Full Debian 13 VM acceptance is still required before image integration.
+installation. The image smoke harness now runs `tests/verify-vpsctl-guest.py` for both fresh guests and after reboot; actual full VM execution must still pass before publication.
 
-Next: install/test the `.deb` in a disposable Debian 13 guest, then integrate into
-a future image with package manifest/SBOM/boot coverage. Do not include Rust build
-tools in the server image. Add structured Docker observations and fixture-backed
+Next: execute the integrated v0.4 image/guest acceptance, including non-root CLI, effective security policy and TUI restoration. Rust build tools remain outside the server image. Add structured Docker observations and fixture-backed
 firewall analysis before declaring policy health. Future configuration mutations
 need typed validation, a displayed plan, explicit confirmation, backups, atomic
 updates where feasible and tested remote-safe rollback. No mutations are implemented.
+
+Image builds require a package from the exact clean checkout. Packaging records
+X-Vpsctl-Source-Commit/Dirty; image preflight rejects stale/dirty provenance,
+symlinks, privileged payloads, extra files and maintainer scripts. Run packaging
+as your ordinary user after committing changes.

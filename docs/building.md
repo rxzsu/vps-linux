@@ -1,6 +1,6 @@
 # Building VPS Linux
 
-v0.2 is published. This document describes the build procedure and the next development cycle (`VERSION` = `0.3-dev`). Byte-for-byte reproducibility is not claimed. See [validation status](validation.md) for what was actually executed.
+This document describes the v0.4 candidate, including vpsctl 0.4.0. Existing published images remain unchanged. Byte-for-byte reproducibility is not claimed. See [validation status](validation.md) for what was actually executed.
 
 ## Supported host target
 
@@ -15,7 +15,7 @@ sudo apt-get update
 sudo apt-get install -y \
   mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf \
   cloud-image-utils busybox-static gnupg dosfstools e2fsprogs \
-  python3 python3-yaml shellcheck minisign git util-linux
+  python3 python3-yaml shellcheck minisign git util-linux build-essential dpkg-dev
 ```
 
 Debian 13 uses the same package names. A readable installed host kernel is required by libguestfs/supermin. Run `sudo libguestfs-test-tool` if its appliance cannot start. KVM is optional; libguestfs and the test runner can use software emulation, which is slower. Secure Boot must be off for this initial unsigned GRUB build.
@@ -23,14 +23,18 @@ Debian 13 uses the same package names. A readable installed host kernel is requi
 ## Build
 
 ```sh
-git switch feature/v0.3-operations
+git switch feature/vpsctl-0.1
+# Install rustup separately; compile as your ordinary user, not under sudo.
+rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+./vpsctl/scripts/package-deb.sh
+python3 scripts/vpsctl_package.py --source . --json
 ./tests/static-checks.sh
 sudo ./build.sh --check
 mkdir -p output
 sudo ./build.sh
 ```
 
-`--check` validates host tools, privileges, architecture, OS, disk space, path safety and namespace support without creating an image. There are no options to specify block devices or overwrite existing artifacts. `build.sh` creates a unique private work directory under `output/`, uses a build lock and publishes a complete bundle by directory rename. Stages run in separate process groups; interruption terminates the active stage before cleanup. Its exit trap removes only its marked work directory, refusing to recursively remove a mounted, symlinked or unmarked path.
+`--check` validates the prepared vpsctl package (exact clean source commit/version, allowed payload, no maintainer hooks), host tools, privileges, architecture, OS, disk space, path safety and namespace support without creating an image. There are no options to specify block devices or overwrite existing artifacts. `build.sh` creates a unique private work directory under `output/`, uses a build lock and publishes a complete bundle by directory rename. Stages run in separate process groups; interruption terminates the active stage before cleanup. Its exit trap removes only its marked work directory, refusing to recursively remove a mounted, symlinked or unmarked path.
 
 If the process is terminated with SIGKILL or the machine loses power, no shell trap can run. Private namespace mounts disappear with their processes; an incomplete hidden work directory may remain. Verify no build process is still running before manually removing that specific directory. Never run recursive deletion on a mounted rootfs or a physical disk.
 
@@ -39,9 +43,10 @@ If the process is terminated with SIGKILL or the machine loses power, no shell t
 A successful build prints a path such as:
 
 ```text
-output/vps-linux-v0.3-dev-<UTC timestamp>-<commit>/
-  vps-linux-v0.3-dev.qcow2
-  vps-linux-v0.3-dev.qcow2.sha256
+output/vps-linux-v0.4-<UTC timestamp>-<commit>/
+  vps-linux-v0.4.qcow2
+  vps-linux-v0.4.qcow2.sha256
+  vpsctl_0.4.0_amd64.deb
   packages.tsv
   build.json
   sbom.spdx.json
@@ -49,7 +54,7 @@ output/vps-linux-v0.3-dev-<UTC timestamp>-<commit>/
   (optional) SHA256SUMS.minisig
 ```
 
-`sbom.spdx.json` is an SPDX 2.3 document generated from `packages.tsv` (one package entry per installed Debian binary package, with purl references). `SHA256SUMS` covers the image, its checksum file, the manifest, `build.json` and the SBOM. Verify any bundle with `./scripts/verify-release.sh <bundle>`; add `--minisign-pubkey FILE` or `--cosign-bundle FILE` to check a signature. CI produces a keyless cosign `.sigstore.json` bundle instead of a local minisign signature.
+`sbom.spdx.json` is an SPDX 2.3 document generated from `packages.tsv` (one package entry per installed Debian binary package, with purl references). `SHA256SUMS` covers the image, its checksum file, the manifest, `build.json` the SBOM and the included vpsctl package. Verify any bundle with `./scripts/verify-release.sh <bundle>`; add `--minisign-pubkey FILE` or `--cosign-bundle FILE` to check a signature. CI produces a keyless cosign `.sigstore.json` bundle instead of a local minisign signature.
 
 The disk is an 8 GiB QCOW2 with GPT, a 512 MiB FAT EFI System Partition and ext4 root. Labels `VPS_EFI` and `VPS_ROOT` are used in fstab. Do not attach multiple clones with these same labels to one running guest. GRUB installs `EFI/BOOT/BOOTX64.EFI` via `--removable --no-nvram`; no host UEFI entry is written. The kernel has virtio drivers in its initramfs, and logs to ttyS0.
 
@@ -57,7 +62,9 @@ The bundle is read-only by file mode as a guard against accidents, not cryptogra
 
 ## Package inputs and repeatability
 
-Only official Debian `trixie`, `trixie-updates` and `trixie-security` main repositories are used. Vendored [public archive keys](../configs/apt/README.md) provide the initial trust roots; APT signature and artifact-checksum verification stays enabled. No third-party Docker repository is used, and no proxy settings/credentials are stored in the guest.
+The first-party vpsctl package is built from this clean checkout with locked Rust dependencies. Its snapshot is validated again before installation via dpkg; its source/hash are recorded in build.json and it is included in the manifest/SBOM. No Rust compiler is installed in the guest. Rebuild the package after each commit; mismatching or dirty-package provenance is rejected.
+
+Debian dependencies use only official `trixie`, `trixie-updates` and `trixie-security` main repositories are used. Vendored [public archive keys](../configs/apt/README.md) provide the initial trust roots; APT signature and artifact-checksum verification stays enabled. No third-party Docker repository is used, and no proxy settings/credentials are stored in the guest.
 
 The goal is a repeatable procedure; it produced the published v0.2 image. Packages are not version-locked or snapshot-pinned. Apt archives move; filesystem UUIDs, build timestamps and metadata vary. **Byte-for-byte reproducibility has not been implemented or verified.** `packages.tsv` records exact installed versions; `build.json` records the source commit, dirty status and digests. These are audit records, not enough to reconstruct packages that disappear from mirrors.
 

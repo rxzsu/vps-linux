@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 cd "$PROJECT_DIR"
-for tool in shellcheck minisign qemu-img apt-config; do
+for tool in shellcheck minisign qemu-img apt-config dpkg-deb; do
     command -v "$tool" >/dev/null || { echo "Missing static/integrity test tool: $tool (see docs/testing.md)" >&2; exit 1; }
 done
 for file in build.sh scripts/*.sh tests/*.sh; do bash -n "$file"; done

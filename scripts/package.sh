@@ -19,7 +19,9 @@ commit = git('rev-parse', 'HEAD')
 dirty = bool(git('status', '--porcelain', '--untracked-files=normal'))
 if commit != os.environ['VPS_LINUX_SOURCE_COMMIT'] or (not version.endswith('-dev') and dirty):
     sys.exit('Source changed during build; refusing to package a stable candidate')
+vpsctl = json.loads((pathlib.Path(os.environ['VPS_LINUX_WORK']) / 'vpsctl.json').read_text())
 metadata = {
+    'vpsctl': vpsctl,
     'version': version, 'suite': 'trixie', 'architecture': 'amd64',
     'created_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
     'source_commit': commit,
@@ -35,6 +37,8 @@ metadata = {
 }
 (bundle / 'build.json').write_text(json.dumps(metadata, indent=2) + '\n')
 PY
+vpsctl_file=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["vpsctl"]["package_file"])' "$bundle/build.json")
+cp "$VPS_LINUX_WORK/vpsctl.deb" "$bundle/$vpsctl_file"
 created=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["created_utc"])' "$bundle/build.json")
 python3 "$PROJECT_DIR/scripts/generate-sbom.py" \
     "$bundle/packages.tsv" "$bundle/sbom.spdx.json" \
@@ -42,7 +46,7 @@ python3 "$PROJECT_DIR/scripts/generate-sbom.py" \
 (cd "$bundle" && sha256sum \
     "vps-linux-v${VPS_LINUX_VERSION}.qcow2" \
     "vps-linux-v${VPS_LINUX_VERSION}.qcow2.sha256" \
-    packages.tsv build.json sbom.spdx.json > SHA256SUMS)
+    packages.tsv build.json sbom.spdx.json "$vpsctl_file" > SHA256SUMS)
 # Optional local signing. CI uses keyless cosign on SHA256SUMS instead, so no
 # private key ever needs to exist in this repository or on a runner.
 if [[ -n ${VPS_LINUX_SIGNING_KEY:-} ]]; then

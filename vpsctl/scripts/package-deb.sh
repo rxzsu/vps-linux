@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build a package as the current user; never install it or invoke sudo.
 set -Eeuo pipefail
+umask 022
 project=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 cd "$project"
 for tool in cargo python3 dpkg-deb git install; do
@@ -8,6 +9,9 @@ for tool in cargo python3 dpkg-deb git install; do
 done
 version=$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["package"]["version"])')
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid package version' >&2; exit 1; }
+source_commit=$(git -c safe.directory="$project/.." rev-parse HEAD)
+source_dirty=false
+[[ -z $(git -c safe.directory="$project/.." status --porcelain --untracked-files=normal) ]] || source_dirty=true
 export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct -- .)}
 [[ $SOURCE_DATE_EPOCH =~ ^[0-9]+$ ]] || { echo 'Invalid SOURCE_DATE_EPOCH' >&2; exit 1; }
 cargo +1.99.0 build --locked --release --target x86_64-unknown-linux-gnu
@@ -30,6 +34,8 @@ cat > "$work/debian/vpsctl/DEBIAN/control" <<CONTROL
 Package: vpsctl
 Version: $version
 Architecture: amd64
+X-Vpsctl-Source-Commit: $source_commit
+X-Vpsctl-Source-Dirty: $source_dirty
 Maintainer: VPS Linux contributors <noreply@vps-linux.invalid>
 Depends: $dependencies, coreutils
 Recommends: iproute2, systemd, openssh-server, nftables, curl

@@ -26,3 +26,6 @@ iproute2
 iputils-ping
 curl
 locales
+
+# Runtime for the source-built Rust utility (no guest Rust compiler).
+libgcc-s1

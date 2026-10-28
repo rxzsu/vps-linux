@@ -30,7 +30,8 @@ def parse_manifest(data):
         if key in seen:
             raise ValueError('Duplicate package/architecture in manifest')
         seen.add(key)
-        locator = f'pkg:deb/debian/{quote(name, safe="")}@{quote(version, safe="")}'
+        vendor = 'vps-linux' if name == 'vpsctl' else 'debian'
+        locator = f'pkg:deb/{vendor}/{quote(name, safe="")}@{quote(version, safe="")}'
         if arch is not None:
             locator += '?arch=' + arch
         packages.append({

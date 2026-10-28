@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths: ['build.sh', 'VERSION', 'scripts/**', 'configs/**', 'packages/**', 'tests/**', 'docs/**', '.github/workflows/validate-build-system.yml']
+    paths: ['build.sh', 'VERSION', 'scripts/**', 'vpsctl/**', 'configs/**', 'packages/**', 'tests/**', 'docs/**', '.github/workflows/validate-build-system.yml']
   workflow_dispatch:
     inputs:
       build_and_boot:
@@ -76,7 +76,27 @@ jobs:
       - name: Install host prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get -o Dir::Cache::archives="$GITHUB_WORKSPACE/.ci-cache/apt" -o APT::Keep-Downloaded-Packages=true install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs shellcheck
+          sudo apt-get -o Dir::Cache::archives="$GITHUB_WORKSPACE/.ci-cache/apt" -o APT::Keep-Downloaded-Packages=true install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs shellcheck dpkg-dev build-essential
+      - name: Install Rust MSRV
+        run: rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+      - name: Restore vpsctl build cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            vpsctl/target/
+          key: image-vpsctl-${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-${{ hashFiles('vpsctl/Cargo.lock') }}
+      - name: Build and validate source-bound vpsctl package
+        run: |
+          cargo +1.99.0 fmt --manifest-path vpsctl/Cargo.toml --all -- --check
+          cargo +1.99.0 clippy --manifest-path vpsctl/Cargo.toml --locked --all-targets --all-features -- -D warnings
+          cargo +1.99.0 test --manifest-path vpsctl/Cargo.toml --locked --all-targets
+          cargo +1.99.0 build --manifest-path vpsctl/Cargo.toml --locked
+          python3 vpsctl/tests/tui_pty.py
+          ./vpsctl/scripts/package-deb.sh
+          python3 vpsctl/tests/package_deb.py
+          python3 scripts/vpsctl_package.py --source . --json
       - name: Build development candidate
         run: |
           sudo chown -R root:root .ci-cache/libguestfs
@@ -121,6 +141,7 @@ jobs:
           test -n "$image"
           bundle=$(dirname "$image")
           mkdir -p ci-artifacts
+          cp "$bundle"/vpsctl_*.deb ci-artifacts/
           cp "$image" "$image.sha256" "$bundle/build.json" "$bundle/packages.tsv" \
             "$bundle/sbom.spdx.json" "$bundle/SHA256SUMS" \
             artifacts/SHA256SUMS.sigstore.json ci-artifacts/

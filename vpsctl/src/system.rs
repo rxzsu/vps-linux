@@ -176,6 +176,7 @@ pub fn status() -> Status {
 pub struct Info {
     pub schema_version: u32,
     pub utility_version: &'static str,
+    pub utility_package_source_commit: Option<String>,
     pub vps_linux_version: Option<String>,
     pub os: BTreeMap<String, String>,
     pub architecture: &'static str,
@@ -183,9 +184,21 @@ pub struct Info {
 }
 
 pub fn info() -> Info {
+    let package_source = probe(
+        "/usr/bin/dpkg-query",
+        &["-W", "-f=${Version}\t${X-Vpsctl-Source-Commit}", "vpsctl"],
+    )
+    .and_then(|s| {
+        let (version, commit) = s.split_once('\t')?;
+        (version == env!("CARGO_PKG_VERSION")
+            && commit.len() == 40
+            && commit.bytes().all(|b| b.is_ascii_hexdigit()))
+        .then(|| commit.to_owned())
+    });
     Info {
         schema_version: 1,
         utility_version: env!("CARGO_PKG_VERSION"),
+        utility_package_source_commit: package_source,
         vps_linux_version: read("/usr/share/vps-linux/version")
             .map(|s| s.trim().to_owned())
             .filter(|s| !s.is_empty()),

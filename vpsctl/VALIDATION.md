@@ -1,4 +1,4 @@
-# vpsctl 0.2.0 validation
+# vpsctl 0.4.0 validation
 
 Executed on the development Debian 13 x86_64 container with
 `rustc 1.99.0 (b940084d7 2026-09-28)`; dependencies were locked.
@@ -17,11 +17,16 @@ Executed on the development Debian 13 x86_64 container with
 - `python3 tests/package_deb.py`: extracted payload/metadata/version test passed;
   no maintainer scripts, services/configuration or setuid permission found.
 - ShellCheck on package script and workflow YAML parsing: passed.
-- Existing image `tests/static-checks.sh`: all 60 tests and shell checks passed.
+- Existing image `tests/static-checks.sh`: all 66 tests and shell checks passed.
 - Actual `doctor --online --json`: HTTPS HEAD to deb.debian.org verified through
   the configured environment; NSS resolution was unknown rather than healthy.
 
 24 utility/terminal/package tests passed in total. No package installation, root
 or Docker daemon was needed. The GitHub Actions package job was authored but not
 observed executing here. Debian 13 guest installation/boot acceptance remains a
-follow-up before image integration. Image VERSION, builder and releases unchanged.
+follow-up before image integration. Image integration now targets VPS Linux 0.4; published releases are unchanged. Guest acceptance code is included but has not executed in this environment.
+
+Image integration adds 6 rootless package/bundle regression tests (included in
+the 66 above), with real .deb and sparse QCOW2 fixtures. They verify provenance,
+payload restrictions, checksum coverage and installed-version/SBOM coherence.
+The final clean package is checked against the committed source before push.

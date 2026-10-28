@@ -5,7 +5,10 @@ import json
 import pathlib
 import re
 import sys
+import subprocess
+import tarfile
 from sbom import generate
+from vpsctl_package import validate as validate_vpsctl
 
 
 def digest(path):
@@ -46,6 +49,13 @@ def verify(bundle):
         raise ValueError('Missing full source commit in metadata')
     image = 'vps-linux-v' + version + '.qcow2'
     required = {image, image + '.sha256', 'build.json', 'packages.tsv', 'sbom.spdx.json'}
+    utility = metadata.get('vpsctl')
+    if tuple(map(int, version.removesuffix('-dev').split('.'))) >= (0, 4) and not isinstance(utility, dict):
+        raise ValueError('v0.4+ bundles require vpsctl provenance')
+    if utility is not None:
+        if not isinstance(utility, dict) or not re.fullmatch(r'vpsctl_[0-9]+\.[0-9]+\.[0-9]+_amd64\.deb', utility.get('package_file', '')):
+            raise ValueError('Invalid vpsctl package metadata')
+        required.add(utility['package_file'])
     entries = checksum_entries(manifest)
     if not required <= entries.keys():
         raise ValueError('SHA256SUMS omits mandatory files: ' + ', '.join(sorted(required - entries.keys())))
@@ -58,6 +68,13 @@ def verify(bundle):
         raise ValueError('Package manifest metadata digest mismatch')
     if checksum_entries(regular(bundle, image + '.sha256')) != {image: entries[image]}:
         raise ValueError('Image sidecar checksum does not describe exactly this image')
+    if utility is not None:
+        actual = validate_vpsctl(regular(bundle, utility['package_file']), utility.get('version', ''), commit)
+        if actual != utility or entries[utility['package_file']] != utility['package_sha256']:
+            raise ValueError('vpsctl provenance/hash mismatch')
+        rows = (bundle / 'packages.tsv').read_text().splitlines()
+        if f"vpsctl\t{utility['version']}\tamd64" not in rows:
+            raise ValueError('Installed vpsctl missing from package manifest')
     sbom = json.loads(regular(bundle, 'sbom.spdx.json').read_text())
     expected = generate((bundle / 'packages.tsv').read_bytes(), version, commit,
                         metadata['created_utc'])
@@ -72,5 +89,5 @@ if __name__ == '__main__':
         if candidate.is_symlink() or not candidate.is_dir():
             raise ValueError('Bundle must be a real directory')
         print(verify(candidate.resolve()))
-    except (ValueError, OSError, KeyError, TypeError, IndexError, AttributeError, UnicodeError) as error:
+    except (ValueError, OSError, KeyError, TypeError, IndexError, AttributeError, UnicodeError, subprocess.CalledProcessError, tarfile.TarError) as error:
         sys.exit(str(error))

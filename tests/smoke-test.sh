@@ -153,6 +153,7 @@ PY
     done
     wait_for_cloud_init "$pid" 600 ssh "${ssh_opts[@]}" debian@127.0.0.1
     timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
+    timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 'python3 -' < "$PROJECT_DIR/tests/verify-vpsctl-guest.py"
     python3 "$PROJECT_DIR/tests/qga-check.py" "$work/$instance-qga.sock"
     if [[ $instance == b ]]; then
         timeout 120 ssh "${ssh_opts[@]}" debian@127.0.0.1 'bash -s' < "$PROJECT_DIR/tests/verify-disk-growth.sh"
@@ -189,6 +190,7 @@ GUEST_LOG_CHECK
             sleep 2
         done
         timeout 600 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
+        timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 'python3 -' < "$PROJECT_DIR/tests/verify-vpsctl-guest.py"
         timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /etc/machine-id' > "$work/reboot-machine-id"
         cmp "$work/$instance-machine-id" "$work/reboot-machine-id" || { echo 'Machine ID changed on reboot' >&2; exit 1; }
         for kind in ed25519 ecdsa; do

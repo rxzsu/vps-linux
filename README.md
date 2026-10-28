@@ -4,8 +4,8 @@
 
 VPS Linux is an independent, purpose-configured Debian-based server image for VPS hosting, QEMU/KVM and Docker workloads. It uses Debian packages and security maintenance; it is not a replacement distribution built from scratch.
 
-- **Stable:** [v0.2](https://github.com/rxzsu/vps-linux/releases/tag/v0.2), built by the automated build system and boot-tested. [v0.1](https://github.com/rxzsu/vps-linux/releases/tag/v0.1) remains available as the legacy manually assembled release; its assets are unchanged.
-- **Development:** `main`, targeting v0.3. `VERSION` is `0.3-dev`; no v0.3 release exists.
+- **Published reference:** [v0.2](https://github.com/rxzsu/vps-linux/releases/tag/v0.2), built by the automated build system and boot-tested. [v0.1](https://github.com/rxzsu/vps-linux/releases/tag/v0.1) remains available as the legacy manually assembled release; its assets are unchanged.
+- **Next candidate:** VPS Linux **0.4** with **vpsctl 0.4.0**, developed in `feature/vpsctl-0.1`. Final publication requires the full image/VM acceptance workflow. See [v0.4 integration](docs/v0.4.md); all published releases remain unchanged.
 - **Website:** https://vps-linux.vercel.app/ (English and Russian).
 - **License:** [MIT](LICENSE).
 
@@ -31,22 +31,23 @@ Debian 13 Trixie, x86_64, Linux 6.12 (tested kernel `6.12.107+deb13-amd64`), UEF
 
 Download the [v0.1 QCOW2 and SHA256](https://github.com/rxzsu/vps-linux/releases/tag/v0.1). Existing release assets remain unchanged. The published v0.1 image was tested on disposable copies; its manual assembly cannot be reconstructed exactly from this repository.
 
-## v0.3 development
+## v0.4 candidate
 
-`VERSION` is `0.3-dev`. Work after the v0.2 tag targets the next version; never rebuild a changed tree under the published `0.2` label.
+`VERSION` is `0.4`. Compile the source-bound vpsctl package from a clean checkout before building. This version is a release candidate until VM acceptance passes; never rebuild changed sources under a previously published stable label.
 
 ```sh
-# Install prerequisites from docs/building.md first.
+# Install prerequisites (including Rust 1.99.0) from docs/building.md first.
+./vpsctl/scripts/package-deb.sh
 ./tests/static-checks.sh
 sudo ./build.sh --check
 sudo ./build.sh
 # Use the exact output path printed by the builder:
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.3-dev.qcow2
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.4.qcow2
 ```
 
 A development build is not a release. Stable candidates require a clean checkout, and their bundle must pass `./tests/release-check.sh` before any tag or publication. Verify any bundle with `./scripts/verify-release.sh <bundle>`; it checks `SHA256SUMS` and the SPDX SBOM, and optionally a minisign or keyless cosign signature.
 
-v0.3 development adds capped Docker container logs with `live-restore`, journald storage limits, security-only `unattended-upgrades` with no automatic reboot, an enabled-but-guarded `qemu-guest-agent`, and a 10 GiB overlay disk-growth check. Build bundles now include `sbom.spdx.json` and `SHA256SUMS`; CI keyless-signs the checksums.
+The earlier v0.3 cycle added capped Docker container logs with `live-restore`, journald storage limits, security-only `unattended-upgrades` with no automatic reboot, an enabled-but-guarded `qemu-guest-agent`, and a 10 GiB overlay disk-growth check. Build bundles now include `sbom.spdx.json` and `SHA256SUMS`; CI keyless-signs the checksums.
 
 - [Host setup and building](docs/building.md)
 - [Architecture and security policy](docs/architecture.md)
@@ -73,5 +74,5 @@ See [website/README.md](website/README.md) for Vercel import settings, the custo
 ## vpsctl
 
 The separate [vpsctl Rust utility](vpsctl/README.md) provides a read-only CLI and
-terminal control center. Version 0.2.0 is developed independently of the image;
-it is not included in the v0.3 image build or existing release assets.
+terminal control center. Version 0.4.0 is integrated into the v0.4 candidate as a source-bound Debian package.
+It is not retroactively added to older release assets.

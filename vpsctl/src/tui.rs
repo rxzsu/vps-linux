@@ -87,7 +87,7 @@ pub fn run() -> Result<()> {
     loop {
         terminal.draw(|frame| {
             let areas = Layout::vertical([Constraint::Length(3), Constraint::Min(1), Constraint::Length(3)]).split(frame.area());
-            frame.render_widget(Tabs::new(["Status", "Info", "Doctor", "Security", "Network"]).select(selected).highlight_style(Style::default().fg(Color::Cyan)).block(Block::default().title("vpsctl 0.2.0 · read-only").borders(Borders::ALL)), areas[0]);
+            frame.render_widget(Tabs::new(["Status", "Info", "Doctor", "Security", "Network"]).select(selected).highlight_style(Style::default().fg(Color::Cyan)).block(Block::default().title("vpsctl 0.4.0 · read-only").borders(Borders::ALL)), areas[0]);
             frame.render_widget(Paragraph::new(content.as_str()).wrap(Wrap { trim: false }).scroll((scroll, 0)).block(Block::default().borders(Borders::ALL)), areas[1]);
             frame.render_widget(Paragraph::new("←/→ Tab: sections · ↑/↓: scroll · r: refresh · q/Esc/Ctrl-C: quit\nUnknown means unverified. Probes may take a few seconds.").block(Block::default().borders(Borders::TOP)), areas[2]);
         })?;
