@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       build_and_boot:
-        description: 'Build v0.2-dev and boot two disposable instances (not a release)'
+        description: 'Build versioned candidate and boot two disposable instances (not a release)'
         type: boolean
         default: false
 permissions:
@@ -34,7 +34,7 @@ jobs:
         run: sudo ./build.sh
       - name: Boot two disposable instances
         run: |
-          image=$(find output -maxdepth 2 -name 'vps-linux-v0.2-dev.qcow2' -type f -print -quit)
+          image=$(find output -maxdepth 2 -name "vps-linux-v$(cat VERSION).qcow2" -type f -print -quit)
           test -n "$image"
           ./tests/smoke-test.sh "$image" --accel tcg
       - name: Retain build metadata only

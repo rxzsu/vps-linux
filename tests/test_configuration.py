@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Policy(unittest.TestCase):
+    def test_release_version(self):
+        self.assertEqual((ROOT / 'VERSION').read_text().strip(), '0.2')
+
     def test_cloud_provisioning_policy(self):
         config = yaml.safe_load((ROOT / 'configs/cloud-init/99-vps-linux.cfg').read_text())
         self.assertIs(config['ssh_pwauth'], False)

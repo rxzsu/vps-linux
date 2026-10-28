@@ -6,16 +6,16 @@
 ./tests/static-checks.sh
 ```
 
-Bash syntax, ShellCheck, 17 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
+Bash syntax, ShellCheck, 19 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
 
 ## Automated acceptance test
 
 After a successful build, use the exact image path printed by `build.sh`:
 
 ```sh
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2-dev.qcow2
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2
 # If KVM is unavailable:
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2-dev.qcow2 --accel tcg
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2 --accel tcg
 ```
 
 The runner checks integrity and the supplied checksum, rejects external backing/data files, and launches **two independent QCOW2 overlays** of the read-only candidate. Each guest gets a fresh OVMF vars file, unique NoCloud instance ID/hostname and a temporary SSH public key. The private key stays in a mode-0700 `/tmp` directory and is removed on every normal/error/signal exit. Test keys/seed data are never put in the candidate. SIGKILL cannot run cleanup traps; inspect and remove only the abandoned test directory and its specific QEMU process after an interrupted run.
@@ -46,7 +46,7 @@ Start from a disposable overlay and your own public key. Run from the checkout:
 ```sh
 mkdir -p output/manual-test
 qemu-img create -f qcow2 -F qcow2 \
-  -b "$(realpath output/<build-id>/vps-linux-v0.2-dev.qcow2)" \
+  -b "$(realpath output/<build-id>/vps-linux-v0.2.qcow2)" \
   output/manual-test/disk.qcow2
 cp tests/cloud-init/user-data.example output/manual-test/user-data
 cp tests/cloud-init/meta-data.example output/manual-test/meta-data
@@ -87,7 +87,7 @@ The manual path uses your own normal SSH host-key verification. An old known-hos
 ## Extended pre-release check
 
 ```sh
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2-dev.qcow2 --release-check
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2 --release-check
 ```
 
 This opt-in mode needs guest Internet access to NTP servers and Docker Hub. It runs the offline checks on both disposable instances, and additionally on instance A waits for actual NTP synchronization, pulls/runs hello-world and nginx, verifies HTTP, reboots the guest, waits for a changed boot ID, reruns functional/security checks and checks that machine-id and both SSH host keys persist. It then checks the HTTP container restarts, NTP resynchronizes and no systemd units fail. All phases have bounded timeouts; network failures fail the check rather than being marked passed. The backing image remains unchanged.

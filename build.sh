@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a DEVELOPMENT image, never modify an existing release.
+# Build a versioned candidate; never modify an existing release.
 set -Eeuo pipefail
 umask 022
 set +m  # Each stage gets a separate process group via setsid.
@@ -7,13 +7,19 @@ PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 # shellcheck source=scripts/common.sh
 source "$PROJECT_DIR/scripts/common.sh"
 case ${1:-} in
-    --help|-h) printf 'Usage: sudo ./build.sh [--check]\nBuild Debian Trixie amd64 v0.2-dev under output/. Existing artifacts are never overwritten.\n'; exit 0 ;;
+    --help|-h) printf 'Usage: sudo ./build.sh [--check]\nBuild Debian Trixie amd64 v%s under output/. Existing artifacts are never overwritten.\n' "$VPS_LINUX_VERSION"; exit 0 ;;
     --check|'') ;;
     *) die 'Unknown argument. Use ./build.sh --help.' ;;
 esac
 [[ $# -le 1 ]] || die 'Too many arguments.'
+# Stable candidates must bind to committed sources, including helper files.
+if [[ $VPS_LINUX_VERSION != *-dev ]] && [[ -n $(git -c safe.directory="$PROJECT_DIR" -C "$PROJECT_DIR" status --porcelain --untracked-files=normal) ]]; then
+    die 'Stable candidate requires a clean checkout. Preserve/commit or stash local edits before building.'
+fi
 preflight_build
 [[ ${1:-} != --check ]] || { log 'Host preflight passed; no image was built.'; exit 0; }
+VPS_LINUX_SOURCE_COMMIT=$(git -c safe.directory="$PROJECT_DIR" -C "$PROJECT_DIR" rev-parse HEAD)
+export VPS_LINUX_SOURCE_COMMIT
 ensure_output
 exec 9>"$OUTPUT_DIR/.build.lock"
 flock -n 9 || die 'Another build holds output/.build.lock.'
@@ -48,7 +54,7 @@ export TMPDIR="$VPS_LINUX_WORK"
 export LIBGUESTFS_BACKEND=direct
 export VPS_LINUX_SOURCE_DIR="$PROJECT_DIR"
 export DEBIAN_FRONTEND=noninteractive
-BUILD_ID="vps-linux-v0.2-dev-$(date -u +%Y%m%dT%H%M%SZ)-$(git -c safe.directory="$PROJECT_DIR" -C "$PROJECT_DIR" rev-parse --short=12 HEAD)"
+BUILD_ID="vps-linux-v${VPS_LINUX_VERSION}-$(date -u +%Y%m%dT%H%M%SZ)-${VPS_LINUX_SOURCE_COMMIT:0:12}"
 [[ ! -e $OUTPUT_DIR/$BUILD_ID ]] || die 'Build identifier already exists; retry after one second.'
 log 'A/B: bootstrap Debian in a private mount/PID namespace'
 run_stage "$PROJECT_DIR/scripts/bootstrap.sh"
@@ -56,10 +62,10 @@ log 'C: create GPT/EFI/ext4 disk inside the libguestfs appliance'
 run_stage "$PROJECT_DIR/scripts/create-image.sh"
 log 'E/F: install removable UEFI bootloader and clean guest state'
 run_stage "$PROJECT_DIR/scripts/install-bootloader.sh"
-log 'G: package and verify development artifact'
+log 'G: package and verify versioned candidate'
 run_stage "$PROJECT_DIR/scripts/package.sh"
 # Directory rename publishes the complete bundle on the same filesystem.
 chmod 755 "$VPS_LINUX_WORK/release"
 mv -T -- "$VPS_LINUX_WORK/release" "$OUTPUT_DIR/$BUILD_ID"
-printf '\nBuild completed (boot test still required):\n%s\n' "$OUTPUT_DIR/$BUILD_ID/vps-linux-v0.2-dev.qcow2"
-printf 'Run: ./tests/smoke-test.sh %q\n' "$OUTPUT_DIR/$BUILD_ID/vps-linux-v0.2-dev.qcow2"
+printf '\nBuild completed (boot test still required):\n%s\n' "$OUTPUT_DIR/$BUILD_ID/vps-linux-v${VPS_LINUX_VERSION}.qcow2"
+printf 'Run: ./tests/smoke-test.sh %q\n' "$OUTPUT_DIR/$BUILD_ID/vps-linux-v${VPS_LINUX_VERSION}.qcow2"

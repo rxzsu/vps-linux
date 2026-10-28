@@ -42,8 +42,8 @@ systemctl --root="$root" enable cloud-init-main.service cloud-init-local.service
 # shellcheck disable=SC2016
 chroot "$root" dpkg-query -W '-f=${binary:Package}\t${Version}\n' > "$root/usr/share/vps-linux/packages.tsv"
 cp "$root/usr/share/vps-linux/packages.tsv" "$VPS_LINUX_WORK/release/packages.tsv"
-printf 'VPS Linux v0.2-dev\nDebian-based server image\n' > "$root/etc/issue"
-printf '0.2-dev\n' > "$root/usr/share/vps-linux/version"
+printf 'VPS Linux v%s\nDebian-based server image\n' "$VPS_LINUX_VERSION" > "$root/etc/issue"
+printf '%s\n' "$VPS_LINUX_VERSION" > "$root/usr/share/vps-linux/version"
 
 printf 'virtio_pci\nvirtio_blk\nvirtio_net\next4\n' >> "$root/etc/initramfs-tools/modules"
 : > "$root/usr/share/vps-linux/.build-in-progress"

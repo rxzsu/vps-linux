@@ -2,6 +2,9 @@
 # Shared host helpers. No mount, loop or NBD operations are performed on the host.
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 OUTPUT_DIR="$PROJECT_DIR/output"
+VPS_LINUX_VERSION=$(cat "$PROJECT_DIR/VERSION")
+[[ $VPS_LINUX_VERSION =~ ^[0-9]+\.[0-9]+(-dev)?$ ]] || { echo 'Invalid VERSION' >&2; exit 1; }
+export VPS_LINUX_VERSION
 log() { printf '[vps-linux] %s\n' "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 ensure_output() {

@@ -28,8 +28,10 @@ These are owner-reported results, not VM executions in the managed authoring con
 ## Remaining release preparation
 
 - Inspect the candidate's original build.json, checksum and package manifest to bind reported checks to the exact artifact; these files and QCOW2 currently remain on the owner's host.
-- The tested artifact and current builder identify as `0.2-dev`. A stable `0.2` build must use consistent version markers/metadata and receive acceptance testing after promotion; do not silently rename/relabel the existing immutable candidate.
+- The tested artifact identifies as `0.2-dev`; the builder now selects `0.2` from VERSION. A stable `0.2` build must use consistent version markers/metadata and receive acceptance testing after promotion; do not silently rename/relabel the existing immutable candidate.
 - Preserve exact source provenance, including the local Bash-launch patch applied on top of `1782d8f`; a clean release source revision still needs to be selected.
 - Full build duration, peak disk use, exact host firmware/acceleration and final file size were not supplied. Bootstrap timing alone is not total build time.
 - GitHub Actions manual integration workflow remains unrun; independent byte-for-byte rebuild comparison remains unrun.
 - No v0.2 tag, merge, uploaded release asset or public release has been created by this task.
+
+Owner-supplied development metadata binds the reported results to image SHA256 `a623923e001a6b67a8adb7d83f92c1e12a4cbcd11a2d3526529dc606c13be72d`, package-manifest SHA256 `8b51580062a8c568a224890bdf15ca35e910a6c2e2820459b013bc6a254252a7`, source `1782d8f8c69ff297e76a210d294423d3a07ebeb4` with `source_dirty: true` and build timestamp `2026-10-28T16:51:14.470097+00:00`. This evidence does not transfer automatically to the final stable-version artifact. `boot_smoke_test: not_run` remains unchanged in that immutable build-time metadata; the later test results are recorded separately here.

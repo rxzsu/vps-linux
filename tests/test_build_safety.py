@@ -81,6 +81,36 @@ class CleanupSafety(unittest.TestCase):
         self.assertTrue(work.exists())
 
 
+class FinalCandidateSelection(unittest.TestCase):
+    def test_rejects_dev_and_dirty_candidates_and_selects_clean_final(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'tests').mkdir()
+            (root / 'VERSION').write_text('0.2\n')
+            wrapper = root / 'tests/release-check.sh'
+            wrapper.write_text((ROOT / 'tests/release-check.sh').read_text())
+            smoke = root / 'tests/smoke-test.sh'
+            smoke.write_text('#!/bin/bash\nprintf "%s\\n" "$@"\n')
+            smoke.chmod(0o755)
+            dev = root / 'output/vps-linux-v0.2-dev-20260101'
+            dev.mkdir(parents=True)
+            (dev / 'vps-linux-v0.2-dev.qcow2').touch()
+            result = subprocess.run(['bash', str(wrapper)], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            final = root / 'output/vps-linux-v0.2-20260101'
+            final.mkdir()
+            (final / 'vps-linux-v0.2.qcow2').touch()
+            metadata = final / 'build.json'
+            metadata.write_text(json.dumps({'version': '0.2', 'source_dirty': True}))
+            result = subprocess.run(['bash', str(wrapper)], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            metadata.write_text(json.dumps({'version': '0.2', 'source_dirty': False}))
+            result = subprocess.run(['bash', str(wrapper)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('--release-check', result.stdout)
+            self.assertNotIn('0.2-dev', result.stdout)
+
+
 class CommandLine(unittest.TestCase):
     def test_help_does_not_need_privilege(self):
         for script in ('build.sh', 'tests/smoke-test.sh'):

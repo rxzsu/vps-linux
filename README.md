@@ -5,7 +5,7 @@
 VPS Linux is an independent, purpose-configured Debian-based server image for VPS hosting, QEMU/KVM and Docker workloads. It uses Debian packages and security maintenance; it is not a replacement distribution built from scratch.
 
 - **Stable:** [v0.1](https://github.com/rxzsu/vps-linux/releases/tag/v0.1), manually assembled and tested.
-- **Development:** v0.2 build automation, on `feature/v0.2-build-system`. No v0.2 image is released or boot-verified yet.
+- **Development:** v0.2 build automation, on `feature/v0.2-build-system`. A development candidate passed owner-reported Zorin build/boot/online/reboot checks; the final 0.2 candidate still needs building and testing. No v0.2 release is published.
 - **Website:** https://vps-linux1.companiumpidors.workers.dev/ (English and Russian).
 - **License:** [MIT](LICENSE).
 
@@ -31,10 +31,10 @@ The first iteration implements mmdebstrap → configured Debian rootfs → libgu
 sudo ./build.sh --check
 sudo ./build.sh
 # Use the exact output path printed by the builder:
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2-dev.qcow2
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2
 ```
 
-**Full build and VM acceptance tests are not yet run.** See [validation evidence and blockers](docs/validation.md). A build exit status alone is not boot verification. This targets a repeatable procedure; byte-for-byte reproducibility is not claimed.
+**Development-candidate acceptance passed on the owner’s Zorin host. The final-version artifact must be rebuilt from clean source and tested using `./tests/release-check.sh`.** See [validation evidence and blockers](docs/validation.md). A build exit status alone is not boot verification. This targets a repeatable procedure; byte-for-byte reproducibility is not claimed.
 
 - [Host setup and building](docs/building.md)
 - [Architecture and security policy](docs/architecture.md)

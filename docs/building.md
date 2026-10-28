@@ -1,4 +1,4 @@
-# Building v0.2-dev
+# Building the v0.2 final candidate
 
 This is the first build-system iteration, **not a released or boot-verified v0.2**. v0.1 remains the manually assembled stable release. See [validation status](validation.md) before relying on this implementation.
 
@@ -39,9 +39,9 @@ If the process is terminated with SIGKILL or the machine loses power, no shell t
 A successful build prints a path such as:
 
 ```text
-output/vps-linux-v0.2-dev-<UTC timestamp>-<commit>/
-  vps-linux-v0.2-dev.qcow2
-  vps-linux-v0.2-dev.qcow2.sha256
+output/vps-linux-v0.2-<UTC timestamp>-<commit>/
+  vps-linux-v0.2.qcow2
+  vps-linux-v0.2.qcow2.sha256
   packages.tsv
   build.json
 ```
@@ -63,3 +63,9 @@ The goal is a repeatable procedure, still awaiting its first full local build/bo
 - libguestfs appliance error: run `sudo libguestfs-test-tool`, check available RAM, host kernel and KVM permissions. Use `LIBGUESTFS_BACKEND=direct`; this builder sets it itself.
 - Compose version/interface failure: the build fails before packaging. Keep the Debian V2 package and inspect the actual package version; do not silently substitute Compose V1.
 - Failed bootstrap/image stages: the unpublished work directory is removed; keep terminal output for diagnosis. Do not paste credentials or the full process environment.
+
+## Final versioned candidate
+
+`VERSION` now selects `0.2`. Stable candidates require a clean tracked/untracked source tree before building and fail packaging if the source revision or working tree changes during the build. Generated ignored images and keys are not source dirtiness. The final guest marker, issue text, artifact name and metadata all derive from this one file. This prepares a stable candidate; it does not create a tag or publish a release.
+
+Run `./tests/release-check.sh` after a successful final build. It selects the latest version-matching final image, checks that its metadata records a clean build and runs the extended two-instance acceptance harness. It never substitutes a `0.2-dev` image. Repeat acceptance for the new artifact even if a prior development image passed.

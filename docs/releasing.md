@@ -11,7 +11,7 @@ Before considering v0.2:
 5. Investigate every unexplained failure; do not mark unrun/expected checks as passed.
 6. Re-run build/acceptance if code, package inputs or configuration change. Review configuration cleanup and ensure no machine IDs, host keys, accounts, authorized keys, test credentials or proxy secrets remain in the candidate.
 7. Measure build time, peak disk usage and final artifact size and update documentation with the observed environment.
-8. Obtain the repository owner's approval before merging or creating a tag/release. Version promotion must update the build version and metadata consistently; current scripts intentionally emit `0.2-dev`.
+8. Obtain the repository owner's approval before merging or creating a tag/release. Version promotion must update the build version and metadata consistently; the root `VERSION` file now selects `0.2` for the final candidate, which still requires building and acceptance testing.
 9. Publish a **new** release with image, verified SHA256, source commit, package manifest, build metadata, supported firmware/datasource configuration and known limitations. Re-download and reverify published artifacts before announcing them. Never modify v0.1 assets.
 
 Byte-reproducibility is a separate project milestone requiring snapshot/version pins, deterministic filesystem/partition metadata, timestamp handling and independent rebuild comparison. Successful repeatable builds alone do not meet that claim.
