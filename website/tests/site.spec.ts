@@ -56,6 +56,27 @@ test("renders the site, navigation, documentation and release links", async ({
         .evaluate((el) => getComputedStyle(el).animationName),
     ).toBe("none");
   }
+  if (info.project.name === "reduced-motion") {
+    for (const effect of [".aurora", ".mote", ".trace-flow", ".server-stack"]) {
+      expect(
+        await page
+          .locator(effect)
+          .first()
+          .evaluate((el) => getComputedStyle(el).animationName),
+      ).toBe("none");
+    }
+  }
+  if (info.project.name === "desktop") {
+    const card = page.locator(".feature").first();
+    await card.scrollIntoViewIfNeeded();
+    await card.hover();
+    await expect(card).toHaveAttribute("data-lit", "");
+    expect(
+      await card.evaluate((el) => el.style.getPropertyValue("--pointer-x")),
+    ).toMatch(/px$/);
+    await page.locator(".section-intro").first().hover();
+    await expect(card).not.toHaveAttribute("data-lit");
+  }
   expect(errors).toEqual([]);
   await page.setViewportSize({
     width: info.project.name === "mobile" ? 390 : 1440,

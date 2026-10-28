@@ -20,6 +20,10 @@ import {
   TerminalSquare,
 } from "@lucide/vue";
 import Terminal from "./components/Terminal.vue";
+import Atmosphere from "./components/Atmosphere.vue";
+import ServerCore from "./components/ServerCore.vue";
+import { useSpotlight } from "./composables/useSpotlight";
+useSpotlight();
 const menu = ref(false);
 const reduced = useReducedMotion();
 const repo = "https://github.com/rxzsu/vps-linux";
@@ -148,7 +152,7 @@ async function copy(code: string) {
   </header>
   <main id="main">
     <section class="hero shell">
-      <div class="hero-grid" aria-hidden="true"></div>
+      <Atmosphere />
       <motion.div
         :initial="reduced ? false : { opacity: 0, y: 20 }"
         :animate="{ opacity: 1, y: 0 }"
@@ -162,7 +166,12 @@ async function copy(code: string) {
         <div class="eyebrow hero-eyebrow">
           A SMALLER FOUNDATION. A BIGGER POSSIBILITY.
         </div>
-        <h1>Your server.<br /><span>Nothing unnecessary.</span></h1>
+        <h1>
+          Your server.<br /><span class="gradient-text"
+            >Nothing<br class="hero-title-break" />
+            unnecessary.</span
+          >
+        </h1>
         <p class="hero-description">
           A lightweight Debian-powered Linux image for virtual servers, Docker
           workloads, and clean infrastructure.<br class="desktop-break" />
@@ -189,7 +198,7 @@ async function copy(code: string) {
         ><div class="visual-label">
           <span class="status-dot"></span> LESS OVERHEAD. MORE CONTROL.
         </div>
-        <Terminal />
+        <ServerCore /><Terminal />
         <div class="visual-caption">
           <span>Purpose-built for the work that matters.</span
           ><span>01 — FOUNDATION</span>
@@ -264,6 +273,7 @@ async function copy(code: string) {
           </p>
         </div>
         <div class="architecture-flow">
+          <div class="architecture-beam" aria-hidden="true"></div>
           <motion.div
             v-for="(layer, i) in layers"
             :key="layer.title"

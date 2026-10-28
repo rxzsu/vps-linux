@@ -58,7 +58,7 @@ The frontend lives in [`website/`](website/). It uses Vue 3, strict TypeScript, 
 cd website
 bun install --frozen-lockfile
 bun run dev
-# Type-check and produce the static site
+# Produce the static site
 bun run build
 # Browser smoke tests (requires Chromium or Playwright's Chromium)
 bun run test

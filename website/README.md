@@ -8,7 +8,6 @@ Static Vue 3 website. Requires Bun 1.4.4 or newer. No backend, account credentia
 cd website
 bun install --frozen-lockfile
 bun run dev
-bun run check
 bun run build
 bun run preview
 ```
@@ -26,6 +25,17 @@ bun run test
 
 Alternatively, use an installed Chromium: `CHROMIUM_PATH=/usr/bin/chromium bun run test`. Tests cover desktop, mobile and reduced motion, release destinations, navigation, documentation, keyboard focus, browser errors and overflow at representative widths. Screenshots and test results are local ignored artifacts.
 
+## Cloudflare Workers — static assets
+
+The same static output works in the Workers Git setup UI:
+
+- Root directory / Path: `website`
+- Build command: `bun install --frozen-lockfile && bun run build`
+- Deploy command: `npx wrangler deploy --assets=./dist --name=vps-linux --compatibility-date=2026-10-28`
+- Disable preview builds unless you separately configure a compatible preview command.
+
+Cloudflare assigns a `workers.dev` URL after deployment. When the final hostname is known, update the canonical and Open Graph URL in `index.html`, `public/robots.txt`, and `public/sitemap.xml`. Email Routing permissions are not required for this static website.
+
 ## Cloudflare Pages — Git integration
 
 1. In Cloudflare, create a **Pages** project and connect `rxzsu/vps-linux`.
@@ -41,3 +51,9 @@ Cloudflare's Git integration handles deployments on push and preview deployments
 ## Content boundaries
 
 Release image and checksum links were verified against GitHub's v0.1 expanded-assets listing. The OS image was not downloaded or boot-tested as part of website development. The project does not yet provide reproducible OS build scripts or verified detailed boot/provisioning commands. The documentation explicitly preserves those limitations.
+
+## Visual system and tooling
+
+The hero uses original CSS/SVG server layers, atmospheric aurora, drifting particles and animated circuit paths, inspired by the Vue Bits visual language. Feature cards use pointer-following spotlights. These are local implementations, with no Vue Bits source copied or added WebGL dependency. All continuous effects disable themselves under `prefers-reduced-motion`; touch devices do not run pointer tracking. Pointer updates are coalesced with `requestAnimationFrame` and listeners are removed on unmount.
+
+`bun run build` uses Vite directly. `vue-tsc` and its build gate were removed intentionally; production builds do not provide full Vue SFC type checking. TypeScript source and strict compiler configuration are retained. Run `bun outdated` to review available library updates and `bun run format:check` to check formatting.
