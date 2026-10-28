@@ -6,7 +6,7 @@
 ./tests/static-checks.sh
 ```
 
-Bash syntax, ShellCheck, 36 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG, qemu-utils, minisign and apt-config. Integrity tests use real sparse QCOW2 files and ephemeral minisign keys; they do not boot VMs. These tests do not prove an image boots.
+Bash syntax, ShellCheck, 45 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG, qemu-utils, minisign and apt-config. Integrity tests use real sparse QCOW2 files and ephemeral minisign keys; they do not boot VMs. These tests do not prove an image boots.
 
 ## Automated acceptance test
 
@@ -85,7 +85,7 @@ The manual path uses your own normal SSH host-key verification. An old known-hos
 
 ## CI
 
-`.github/workflows/validate-build-system.yml` runs static checks on pushes to `main` and relevant pull requests. A manual workflow_dispatch with `build_and_boot=true` frees runner disk space, installs host tools on Ubuntu 24.04, builds the candidate, runs the two-instance smoke suite using available KVM or TCG (including the 10 GiB disk-growth check), verifies `SHA256SUMS`/SBOM, then keyless-signs `SHA256SUMS` with cosign through the workflow OIDC identity. It retains metadata, SBOM, checksums, the signature bundle and failure serial logs. With upload_image enabled, it also saves the successfully tested QCOW2 bundle as a separate seven-day artifact. It never uploads private keys, publishes releases or deploys the website. Verify a downloaded signature with `scripts/verify-release.sh`. GitHub runner success does not replace required local Zorin validation.
+`.github/workflows/validate-build-system.yml` runs static checks on pushes to `main` and relevant pull requests. A manual workflow_dispatch with `build_and_boot=true` frees runner disk space, installs host tools on Ubuntu 24.04, builds the candidate, runs the two-instance smoke suite using available KVM or TCG (including the 10 GiB disk-growth check), verifies `SHA256SUMS`/SBOM, then keyless-signs `SHA256SUMS` with cosign through the workflow OIDC identity. It retains metadata, SBOM, checksums, the signature bundle and failure serial logs. With upload_image enabled, it also saves the successfully tested QCOW2 bundle as a separate seven-day artifact. It never uploads private keys or deploys the website. Release publication requires the separate explicit publish_release option described below. Verify a downloaded signature with `scripts/verify-release.sh`. GitHub runner success does not replace required local Zorin validation.
 
 ## Extended pre-release check
 
@@ -116,6 +116,19 @@ The bundle verifier requires every mandatory artifact to be covered by SHA256SUM
 
 Open **Actions → Validate image build system → Run workflow**. Select `feature/v0.3-operations` and enable `build_and_boot`. Leave `online_tests` and `upload_image` enabled for the full acceptance run and downloadable bundle. No local image build is required.
 
-The job installs host dependencies, builds under sudo, chooses KVM when accessible (otherwise TCG), runs the two-instance growth/Guest Agent and optional online/reboot tests, validates the bundle and keyless signature and rejects a modified manifest. The tested image is uploaded only after all required steps pass. The run's **Artifacts → vps-linux-tested-image-<run-id>** ZIP contains QCOW2, sidecar checksum, build metadata, package list, SBOM, SHA256SUMS and the Sigstore bundle. Artifact retention is seven days. Metadata/failure logs remain a separate artifact, even after failures. No private keys are uploaded and no GitHub release is created.
+The job installs host dependencies, builds under sudo, chooses KVM when accessible (otherwise TCG), runs the two-instance growth/Guest Agent and optional online/reboot tests, validates the bundle and keyless signature and rejects a modified manifest. The tested image is uploaded only after all required steps pass. The run's **Artifacts → vps-linux-tested-image-<run-id>** ZIP contains QCOW2, sidecar checksum, build metadata, package list, SBOM, SHA256SUMS and the Sigstore bundle. Artifact retention is seven days. Metadata/failure logs remain a separate artifact, even after failures. No private keys are uploaded. A build-only run does not create a GitHub release; publication requires the explicit option below.
 
 Default online tests need public registry/NTP availability. Disabling them produces an offline-checked candidate, not a full online/reboot acceptance pass. The run summary and selected inputs distinguish these outcomes. GitHub Actions execution itself remains pending until a real run succeeds; checking the YAML locally is not that evidence.
+
+## Optional automatic tag and release
+
+For a **new manual run from main**, enable `build_and_boot`, `online_tests` and `publish_release`. Publication defaults to false. Setting publication without full online tests/build or from another branch fails validation. The download artifact is produced for publication even if `upload_image` is disabled.
+
+A separate job with contents:write starts only after the complete build/boot/online/signature job succeeds. It downloads the exact immutable artifact ID produced by that job (not an artifact selected by a mutable name), verifies its digest, checks source/version/clean metadata, validates all file hashes, SBOM and QCOW2, and verifies the Sigstore certificate against this workflow's exact main-branch identity.
+
+- `0.3-dev` produces a **prerelease** named `v0.3-dev.<run-id>.<run-attempt>` and does not replace the latest stable release.
+- `0.3` produces stable tag/release `v0.3`, marked latest. The same workflow supports promotion after VERSION changes to 0.3; the final-version artifact must pass all tests.
+
+The tag is created explicitly at the tested source commit with no force update. Existing tags/releases stop publication. Assets first upload to a draft, the uploaded QCOW2/sidecar are downloaded and SHA256-checked again, then the draft becomes public. Release assets include QCOW2, sidecar, SHA256SUMS, build.json, packages.tsv, SPDX SBOM, Sigstore bundle and an acceptance record pointing to the run. Build-time metadata is not rewritten after testing.
+
+Only the publication job has repository write permission. It uses GitHub's built-in token; no personal token or private signing key is stored. No tag/release is created merely by pushing this workflow. Already-running workflows keep their original code/inputs; start a new manual run to use the option. If upload/verification fails after tag/draft creation, inspect that state before retrying; the workflow never deletes, retags or overwrites existing release assets. Publication's policy/API-error paths are locally unit-tested; an end-to-end public GitHub publication has not been executed by the cloud agent.

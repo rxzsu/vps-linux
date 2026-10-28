@@ -19,3 +19,7 @@ Before considering the next stable release:
 The one-shot `scripts/publish-v0.2.sh` has already been used. It refuses to run while tag `v0.2` exists; keep it for provenance and do not force-overwrite the tag.
 
 Byte-reproducibility is a separate project milestone requiring snapshot/version pins, deterministic filesystem/partition metadata, timestamp handling and independent rebuild comparison. Successful repeatable builds alone do not meet that claim.
+
+## CI opt-in publication
+
+The manual build workflow now supports `publish_release`, default false, from main only and only with build_and_boot/online_tests enabled. See [testing.md](testing.md#optional-automatic-tag-and-release) for the exact gate, development prerelease tags, artifact verification and stable promotion behavior. This automates the mechanics of the release gate; it does not let a failing or offline-only run publish. Never rerun the old v0.2 one-shot helper for v0.3.
