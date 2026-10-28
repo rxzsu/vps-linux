@@ -15,12 +15,29 @@ wait_for_time() {
     done
     echo 'NTP synchronization: yes'
 }
+wait_for_http() {
+    local deadline=$((SECONDS + 90)) body
+    while (( SECONDS < deadline )); do
+        # Docker publishes the port before nginx necessarily accepts HTTP.
+        # A reset, refusal, HTTP error or wrong body is not readiness.
+        if body=$(curl --fail --silent --show-error --connect-timeout 2 --max-time 5 http://127.0.0.1:8080/) &&
+            [[ $body == *'Welcome to nginx!'* ]]; then
+            echo 'HTTP nginx readiness: passed'
+            return 0
+        fi
+        sleep 2
+    done
+    echo 'HTTP nginx readiness timed out' >&2
+    sudo -n docker inspect vps-linux-release-http >&2 || true
+    sudo -n docker logs --tail 50 vps-linux-release-http >&2 || true
+    return 1
+}
 wait_for_time
 if [[ ${1:-} != --after-reboot ]]; then
     sudo -n docker run --rm hello-world
     sudo -n docker run -d --name vps-linux-release-http --restart unless-stopped -p 127.0.0.1:8080:80 nginx:alpine
 fi
-curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 --max-time 5 http://127.0.0.1:8080/ | grep -q 'Welcome to nginx!'
+wait_for_http
 [[ -z $(systemctl --failed --no-legend --plain) ]]
 if [[ ${1:-} == --after-reboot ]]; then
     sudo -n docker rm -f vps-linux-release-http
