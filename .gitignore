@@ -1,0 +1,36 @@
+# Virtual machine images
+output/
+*.qcow2
+*.img
+*.raw
+*.iso
+
+# Private SSH keys and test credentials
+keys/
+*.pem
+*.key
+
+# Local NoCloud test data
+nocloud-test/
+nocloud-ssh-test/
+
+# Local files
+*.log
+*.bak
+*.old
+
+# Generated Debian root filesystem
+/build/rootfs/
+
+# Other generated build artifacts
+/build/*.tar
+/build/*.tar.gz
+/build/*.tar.xz
+
+# Local secrets and credentials
+**/id_rsa
+**/id_ed25519
+**/authorized_keys
+**/shadow
+**/shadow-
+**/machine-id
