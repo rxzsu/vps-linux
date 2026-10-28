@@ -107,7 +107,10 @@ with tarfile.open(work / 'container.tar', 'w') as archive:
 PY
 for instance in a b; do
     hostname="vps-linux-smoke-$instance"
-    qemu-img create -f qcow2 -F qcow2 -b "$image" "$work/$instance.qcow2"
+    # Instance B starts 2 GiB larger to exercise cloud-init growpart/resize_rootfs.
+    overlay_size=8G
+    [[ $instance != b ]] || overlay_size=10G
+    qemu-img create -f qcow2 -F qcow2 -b "$image" "$work/$instance.qcow2" "$overlay_size"
     cp "$vars" "$work/$instance-vars.fd"
     {
         printf '#cloud-config\nhostname: %s\nusers: [default]\nssh_authorized_keys:\n  - ' "$hostname"
@@ -128,6 +131,9 @@ PY
         -drive "if=pflash,format=raw,file=$work/$instance-vars.fd" \
         -drive "if=virtio,format=qcow2,file=$work/$instance.qcow2" \
         -drive "if=virtio,format=raw,readonly=on,file=$work/seed.iso" \
+        -device virtio-serial-pci \
+        -chardev "socket,id=qga0,path=$work/$instance-qga.sock,server=on,wait=off" \
+        -device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 \
         -device virtio-net-pci,netdev=net0 -device virtio-rng-pci \
         -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:$port-:22" > "$work/$instance-qemu.log" 2>&1 &
     pid=$!
@@ -140,6 +146,9 @@ PY
     done
     timeout 600 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cloud-init status --wait --long'
     timeout 180 ssh "${ssh_opts[@]}" debian@127.0.0.1 "bash -s -- $hostname" < "$PROJECT_DIR/tests/verify-guest.sh"
+    if [[ $instance == b ]]; then
+        timeout 120 ssh "${ssh_opts[@]}" debian@127.0.0.1 'bash -s' < "$PROJECT_DIR/tests/verify-disk-growth.sh"
+    fi
     timeout 60 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n docker import - vps-linux-smoke' < "$work/container.tar"
     [[ $(timeout 60 ssh "${ssh_opts[@]}" debian@127.0.0.1 'sudo -n docker run --rm --network=none vps-linux-smoke /busybox echo vps-linux-container-ok') == vps-linux-container-ok ]]
     timeout 30 ssh "${ssh_opts[@]}" debian@127.0.0.1 'cat /etc/machine-id' > "$work/$instance-machine-id"

@@ -4,10 +4,20 @@
 
 VPS Linux is an independent, purpose-configured Debian-based server image for VPS hosting, QEMU/KVM and Docker workloads. It uses Debian packages and security maintenance; it is not a replacement distribution built from scratch.
 
-- **Stable:** [v0.1](https://github.com/rxzsu/vps-linux/releases/tag/v0.1), manually assembled and tested.
-- **Development:** v0.2 build automation, on `feature/v0.2-build-system`. A development candidate passed owner-reported Zorin build/boot/online/reboot checks; the final 0.2 candidate still needs building and testing. No v0.2 release is published.
-- **Website:** https://vps-linux1.companiumpidors.workers.dev/ (English and Russian).
+- **Stable:** [v0.2](https://github.com/rxzsu/vps-linux/releases/tag/v0.2), built by the automated build system and boot-tested. [v0.1](https://github.com/rxzsu/vps-linux/releases/tag/v0.1) remains available as the legacy manually assembled release; its assets are unchanged.
+- **Development:** `main`, targeting v0.3. `VERSION` is `0.3-dev`; no v0.3 release exists.
+- **Website:** https://vps-linux.vercel.app/ (English and Russian).
 - **License:** [MIT](LICENSE).
+
+## Stable v0.2
+
+v0.2 was published on 2026-10-28 from clean source commit `7d0ec202786edc037816a946146f1b40912515eb`. The image implements mmdebstrap → configured Debian rootfs → libguestfs GPT/EFI/ext4 disk → removable UEFI GRUB → standalone QCOW2 + SHA256/package manifest/build metadata.
+
+- Published image SHA256: `c5db7d6edde16f566ec646735d9b41e4bdb22996014407a8fd338d79435d176c`, matching `vps-linux-v0.2.qcow2.sha256` and `build.json`.
+- Owner-reported Zorin acceptance passed two independent UEFI boots, NoCloud/SSH policy, Docker and both Compose interfaces, DHCP, ZRAM, NTP synchronization, Docker Hub pulls, HTTP workload and reboot with persistent identities. See [validation evidence](docs/validation.md).
+- `build.json` records `source_dirty: false`; its immutable `boot_smoke_test: not_run` field predates the separate acceptance run.
+
+Download the [v0.2 QCOW2 and SHA256](https://github.com/rxzsu/vps-linux/releases/tag/v0.2). A build exit status alone is not boot verification. The procedure is repeatable; byte-for-byte reproducibility is not claimed.
 
 ## Stable v0.1
 
@@ -21,9 +31,9 @@ Debian 13 Trixie, x86_64, Linux 6.12 (tested kernel `6.12.107+deb13-amd64`), UEF
 
 Download the [v0.1 QCOW2 and SHA256](https://github.com/rxzsu/vps-linux/releases/tag/v0.1). Existing release assets remain unchanged. The published v0.1 image was tested on disposable copies; its manual assembly cannot be reconstructed exactly from this repository.
 
-## v0.2 development build
+## v0.3 development
 
-The first iteration implements mmdebstrap → configured Debian rootfs → libguestfs GPT/EFI/ext4 disk → removable UEFI GRUB → standalone QCOW2 + SHA256/package manifest/build metadata.
+`VERSION` is `0.3-dev`. Work after the v0.2 tag targets the next version; never rebuild a changed tree under the published `0.2` label.
 
 ```sh
 # Install prerequisites from docs/building.md first.
@@ -31,10 +41,12 @@ The first iteration implements mmdebstrap → configured Debian rootfs → libgu
 sudo ./build.sh --check
 sudo ./build.sh
 # Use the exact output path printed by the builder:
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.3-dev.qcow2
 ```
 
-**Development-candidate acceptance passed on the owner’s Zorin host. The final-version artifact must be rebuilt from clean source and tested using `./tests/release-check.sh`.** See [validation evidence and blockers](docs/validation.md). A build exit status alone is not boot verification. This targets a repeatable procedure; byte-for-byte reproducibility is not claimed.
+A development build is not a release. Stable candidates require a clean checkout, and their bundle must pass `./tests/release-check.sh` before any tag or publication. Verify any bundle with `./scripts/verify-release.sh <bundle>`; it checks `SHA256SUMS` and the SPDX SBOM, and optionally a minisign or keyless cosign signature.
+
+v0.3 development adds capped Docker container logs with `live-restore`, journald storage limits, security-only `unattended-upgrades` with no automatic reboot, an enabled-but-guarded `qemu-guest-agent`, and a 10 GiB overlay disk-growth check. Build bundles now include `sbom.spdx.json` and `SHA256SUMS`; CI keyless-signs the checksums.
 
 - [Host setup and building](docs/building.md)
 - [Architecture and security policy](docs/architecture.md)
@@ -45,7 +57,7 @@ Generated root filesystems, images, seeds and keys are ignored and must never be
 
 ## Website
 
-The existing Vue 3/TypeScript/Vite/Tailwind/Motion frontend is in [`website/`](website/). Cloudflare deployment and its static root path are preserved. The **RU / EN** switch saves the user's choice; direct language links use `?lang=ru` / `?lang=en`.
+The Vue 3/TypeScript/Vite/Tailwind/Motion frontend is in [`website/`](website/) and deploys to Vercel as a static site. Vercel uses `website/` as the project root, builds `dist/` with Bun and applies the security/cache headers from [`website/vercel.json`](website/vercel.json). The **RU / EN** switch saves the user's choice; direct language links use `?lang=ru` / `?lang=en`.
 
 ```sh
 cd website
@@ -56,4 +68,4 @@ bun run build
 bun run test
 ```
 
-See [website/README.md](website/README.md). The OS validation workflow does not deploy the website or publish images.
+See [website/README.md](website/README.md) for Vercel import settings, the custom-domain checklist and validation notes. The OS validation workflow does not deploy the website or publish images.

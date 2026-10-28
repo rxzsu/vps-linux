@@ -6,16 +6,16 @@
 ./tests/static-checks.sh
 ```
 
-Bash syntax, ShellCheck, 19 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
+Bash syntax, ShellCheck, 22 Python tests: image admission, cleanup path/symlink protection, CLI rejection, YAML policy, ZRAM, Docker logging/live-restore, journald limits, unattended-upgrade policy, public key fingerprints and workflow syntax. Dependencies: ShellCheck, Python 3, PyYAML, GnuPG. These tests do not prove an image boots.
 
 ## Automated acceptance test
 
 After a successful build, use the exact image path printed by `build.sh`:
 
 ```sh
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.3-dev.qcow2
 # If KVM is unavailable:
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2 --accel tcg
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.3-dev.qcow2 --accel tcg
 ```
 
 The runner checks integrity and the supplied checksum, rejects external backing/data files, and launches **two independent QCOW2 overlays** of the read-only candidate. Each guest gets a fresh OVMF vars file, unique NoCloud instance ID/hostname and a temporary SSH public key. The private key stays in a mode-0700 `/tmp` directory and is removed on every normal/error/signal exit. Test keys/seed data are never put in the candidate. SIGKILL cannot run cleanup traps; inspect and remove only the abandoned test directory and its specific QEMU process after an interrupted run.
@@ -29,10 +29,13 @@ Assertions:
 - cloud-init completion without degraded/error exit, hostname and provisioned `debian` key login;
 - passwordless sudo, locked user/root passwords, no legacy account;
 - effective SSH password/keyboard-interactive/root denial and a rejected root login;
-- Docker daemon, overlay2, cgroups v2 and both Compose V2 interfaces;
+- Docker daemon, overlay2, cgroups v2, both Compose V2 interfaces, `json-file` logging with `10m`/3-file rotation and `live-restore`;
+- journald limits (`SystemMaxUse=200M`), enabled `apt-daily` timers and security-only unattended upgrades without automatic reboot;
+- active `qemu-guest-agent` through an explicitly attached virtio-serial port;
 - **real offline container execution** by importing the host's trusted static BusyBox binary into the disposable guest; no external image registry needed;
 - 1 GiB ZRAM, LZ4, swap priority 100;
 - resolved/networkd/timesyncd active and no failed systemd units;
+- instance B starts from a 10 GiB overlay and must grow its GPT root partition and ext4 filesystem beyond 9 GiB;
 - fresh valid machine-id and ed25519/ECDSA host keys, distinct IDs/ed25519 and ECDSA fingerprints between two instances.
 
 The default test checks NTP **service activity**, not actual time synchronization. External registry pulls and NTP synchronization are **not run** by the offline suite. For release validation on an Internet-connected Zorin host, additionally check `timedatectl show -p NTPSynchronized --value` equals `yes`, `sudo docker run --rm hello-world`, and an HTTP container workload. Keep these outcomes separate.
@@ -46,7 +49,7 @@ Start from a disposable overlay and your own public key. Run from the checkout:
 ```sh
 mkdir -p output/manual-test
 qemu-img create -f qcow2 -F qcow2 \
-  -b "$(realpath output/<build-id>/vps-linux-v0.2.qcow2)" \
+  -b "$(realpath output/<build-id>/vps-linux-v0.3-dev.qcow2)" \
   output/manual-test/disk.qcow2
 cp tests/cloud-init/user-data.example output/manual-test/user-data
 cp tests/cloud-init/meta-data.example output/manual-test/meta-data
@@ -82,14 +85,14 @@ The manual path uses your own normal SSH host-key verification. An old known-hos
 
 ## CI
 
-`.github/workflows/validate-build-system.yml` runs static checks on the development branch and relevant PRs. A manual workflow_dispatch with `build_and_boot=true` installs tools on an Ubuntu 24.04 runner, builds and boots with TCG. This workflow has not yet run; GitHub runner success does not replace required local Zorin validation. It uploads metadata only, never images/keys, and does not publish releases or deploy the website.
+`.github/workflows/validate-build-system.yml` runs static checks on pushes to `main` and relevant pull requests. A manual workflow_dispatch with `build_and_boot=true` frees runner disk space, installs host tools on Ubuntu 24.04, builds the candidate, runs the two-instance smoke suite under TCG (including the 10 GiB disk-growth check), verifies `SHA256SUMS`/SBOM, then keyless-signs `SHA256SUMS` with cosign through the workflow OIDC identity. It uploads only metadata, SBOM, checksums, the signature bundle and failure serial logs — never the image or private keys — and does not publish releases or deploy the website. Verify a downloaded signature with `scripts/verify-release.sh`. GitHub runner success does not replace required local Zorin validation.
 
 ## Extended pre-release check
 
 ```sh
-./tests/smoke-test.sh output/<build-id>/vps-linux-v0.2.qcow2 --release-check
+./tests/smoke-test.sh output/<build-id>/vps-linux-v0.3-dev.qcow2 --release-check
 ```
 
 This opt-in mode needs guest Internet access to NTP servers and Docker Hub. It runs the offline checks on both disposable instances, and additionally on instance A waits for actual NTP synchronization, pulls/runs hello-world and nginx, verifies HTTP, reboots the guest, waits for a changed boot ID, reruns functional/security checks and checks that machine-id and both SSH host keys persist. It then checks the HTTP container restarts, NTP resynchronizes and no systemd units fail. All phases have bounded timeouts; network failures fail the check rather than being marked passed. The backing image remains unchanged.
 
-The extended VM mode has not been executed in the managed authoring environment. The owner reported a successful local build (after the now-committed explicit Bash cleanup fix) and successful two-instance offline smoke checks on Zorin. Extended checks still need an actual run. These tests alone do not publish or promote a release.
+The extended VM mode has not been executed in the managed authoring environment. The owner reported a successful local build on Zorin and a passing extended run covering actual NTP synchronization, Docker Hub pulls, an HTTP workload, reboot with persistent identities and no failed units. The offline two-instance smoke checks also passed. These results are owner-reported; the managed cloud environment did not boot the image. See [validation status](validation.md).

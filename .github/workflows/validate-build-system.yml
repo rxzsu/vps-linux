@@ -1,9 +1,9 @@
 name: Validate image build system
 on:
   push:
-    branches: [feature/v0.2-build-system]
+    branches: [main]
   pull_request:
-    paths: ['build.sh', 'scripts/**', 'configs/**', 'packages/**', 'tests/**', 'docs/**', '.github/workflows/validate-build-system.yml']
+    paths: ['build.sh', 'VERSION', 'scripts/**', 'configs/**', 'packages/**', 'tests/**', 'docs/**', '.github/workflows/validate-build-system.yml']
   workflow_dispatch:
     inputs:
       build_and_boot:
@@ -23,27 +23,55 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.build_and_boot
     needs: static
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      id-token: write  # Keyless cosign signing via the workflow OIDC token.
     steps:
       - uses: actions/checkout@v4
+      - name: Free disk space
+        run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
       - name: Install host prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs
+          sudo apt-get install -y mmdebstrap libguestfs-tools qemu-utils qemu-system-x86 ovmf cloud-image-utils busybox-static gnupg python3-yaml dosfstools e2fsprogs shellcheck
       - name: Build development candidate
         run: sudo ./build.sh
-      - name: Boot two disposable instances
+      - name: Boot two disposable instances with disk-growth test
         run: |
           image=$(find output -maxdepth 2 -name "vps-linux-v$(cat VERSION).qcow2" -type f -print -quit)
           test -n "$image"
+          bundle=$(dirname "$image")
           ./tests/smoke-test.sh "$image" --accel tcg
-      - name: Retain build metadata only
+          ./scripts/verify-release.sh "$bundle"
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign checksums (keyless)
+        run: |
+          bundle=$(dirname "$(find output -maxdepth 2 -name "vps-linux-v$(cat VERSION).qcow2" -type f -print -quit)")
+          mkdir -p artifacts
+          cp "$bundle/SHA256SUMS" "$bundle/sbom.spdx.json" "$bundle/build.json" "$bundle/packages.tsv" artifacts/
+          cosign sign-blob --yes \
+            --bundle artifacts/SHA256SUMS.sigstore.json \
+            artifacts/SHA256SUMS
+          cosign verify-blob artifacts/SHA256SUMS \
+            --bundle artifacts/SHA256SUMS.sigstore.json \
+            --certificate-identity-regexp '^https://github\.com/rxzsu/vps-linux/\.github/workflows/validate-build-system\.yml@refs/' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+      - name: Retain metadata, SBOM and signature (never images or keys)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v0.2-build-metadata
+          name: vps-linux-build-metadata
           path: |
+            artifacts/**
             output/*/build.json
             output/*/packages.tsv
+            output/*/sbom.spdx.json
+            output/*/SHA256SUMS
             output/*/*.sha256
+            output/smoke-failure-*/*.log
           if-no-files-found: ignore

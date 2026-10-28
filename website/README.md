@@ -25,32 +25,39 @@ bun run test
 
 Alternatively, use an installed Chromium: `CHROMIUM_PATH=/usr/bin/chromium bun run test`. Tests cover desktop, mobile and reduced motion, release destinations, navigation, documentation, keyboard focus, browser errors and overflow at representative widths. Screenshots and test results are local ignored artifacts.
 
-## Cloudflare Workers — static assets
+## Vercel deployment
 
-The same static output works in the Workers Git setup UI:
+The production target is **https://vps-linux.vercel.app/**, assuming the project is named `vps-linux`. The canonical link, `og:url`, `public/robots.txt` and `public/sitemap.xml` all use that address; if Vercel assigns a different production hostname, update all four together before announcing the site.
 
-- Root directory / Path: `website`
-- Build command: `bun install --frozen-lockfile && bun run build`
-- Deploy command: `npx wrangler deploy --assets=./dist --name=vps-linux --compatibility-date=2026-10-28`
-- Disable preview builds unless you separately configure a compatible preview command.
+Import `rxzsu/vps-linux` at [vercel.com/new](https://vercel.com/new) and use these settings:
 
-Cloudflare assigns a `workers.dev` URL after deployment. When the final hostname is known, update the canonical and Open Graph URL in `index.html`, `public/robots.txt`, and `public/sitemap.xml`. Email Routing permissions are not required for this static website.
+| Setting | Value |
+| --- | --- |
+| Root Directory | `website` |
+| Framework Preset | Vite (auto-detected) |
+| Install Command | `bun install --frozen-lockfile` |
+| Build Command | `bun run build` |
+| Output Directory | `dist` |
+| Production Branch | `main` |
 
-## Cloudflare Pages — Git integration
+The committed `bun.lock` makes Vercel select Bun; `packageManager` declares the intended Bun 1.4.4 version and `engines.node` pins the build runtime to Node 22. Confirm the actual Bun version in the first build log. No environment variables, API tokens or project IDs are required in the repository.
 
-1. In Cloudflare, create a **Pages** project and connect `rxzsu/vps-linux`.
-2. Select production branch `main` and framework preset **Vue** (or None with the explicit values below).
-3. Set root directory to `website`, build command to `bun run build`, and build output directory to `dist`.
-4. Use the current Pages build image and set build environment variable `BUN_VERSION` to `1.4.4`. The committed `bun.lock` controls dependency versions. For a custom install command, use `bun install --frozen-lockfile`.
-5. Name the project `vps-linux` if available. Deploy and check its assigned `*.pages.dev` address before promoting or sharing it.
+[`vercel.json`](vercel.json) sets the framework, install/build/output commands, security headers and immutable caching for hashed `/assets`. The old Cloudflare `public/_headers` file is intentionally removed because Vercel ignores it.
 
-The default metadata assumes `https://vps-linux.pages.dev/`; ownership/availability of that hostname is not verified. If Cloudflare assigns another hostname or you connect a custom domain, update the canonical link, `og:url`, `public/robots.txt`, and `public/sitemap.xml` before publishing. The Vite base is `/`, appropriate for a Pages root domain. There is no GitHub Pages workflow.
+Vercel Git integration deploys every push to `main` and creates preview deployments for pull requests. Preview deployments are not indexed by search engines by default.
 
-Cloudflare's Git integration handles deployments on push and preview deployments. This task only prepares the repository; it does not create a Cloudflare project or publish a site. No Cloudflare API token belongs in the repository. The `_headers` file applies basic browser security headers to the deployed static assets.
+## Custom domain
+
+1. Add the custom domain in the Vercel project and make it the primary domain.
+2. Configure the DNS records Vercel shows (usually an apex `A`/`ALIAS` and a `www` `CNAME`).
+3. Update the canonical link and `og:url` in `index.html`, plus `public/robots.txt` and `public/sitemap.xml`.
+4. Redeploy and verify HTTPS, `www` redirects and the four public URLs.
+
+No DNS records, tokens or credentials belong in this repository.
 
 ## Content boundaries
 
-Release image and checksum links were verified against GitHub's v0.1 expanded-assets listing. The OS image was not downloaded or boot-tested as part of website development. The project does not yet provide reproducible OS build scripts or verified detailed boot/provisioning commands. The documentation explicitly preserves those limitations.
+Release image and checksum links target the published v0.2 assets. The OS image was not downloaded or boot-tested as part of website development; acceptance evidence lives in `docs/validation.md`. The repository now includes the source-controlled automated build system, so the site must not repeat the old v0.1 claim that build scripts are unavailable.
 
 ## Visual system and tooling
 

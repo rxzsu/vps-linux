@@ -1,17 +1,21 @@
 # Release gate
 
-v0.1 is stable and immutable. Do not replace its QCOW2/checksum assets. v0.2 development remains on `feature/v0.2-build-system`; no release/tag/merge is authorized by merely creating the build scripts.
+v0.1 and v0.2 are published and immutable. Do not replace, retag or relabel their QCOW2/checksum assets. v0.2 was published from clean source `7d0ec202786edc037816a946146f1b40912515eb`; its acceptance and publication evidence is in [validation.md](validation.md).
 
-Before considering v0.2:
+Current development is on `main` with `VERSION` = `0.3-dev`. Any change after the v0.2 tag belongs to the next version; bumping `VERSION` before a stable build is mandatory so a new artifact never reuses a published version label.
+
+Before considering the next stable release:
 
 1. Review the source diff, trust roots and source commit; build from a clean checkout on the developer's Zorin/Ubuntu 24.04 host.
-2. Keep the complete candidate bundle and verify its SHA256 from the bundle's working directory.
+2. Keep the complete candidate bundle and verify it with `./scripts/verify-release.sh <bundle>` (checksums and SPDX SBOM). Sign `SHA256SUMS` before publication: CI uses keyless cosign; a local build may use `VPS_LINUX_SIGNING_KEY` + minisign. Publish the SBOM and signature next to the image.
 3. Run the automated two-instance smoke suite successfully against disposable overlays. Keep exact command, exit status, source commit, package manifest, firmware version and acceleration used.
 4. On the connected developer host verify actual NTP synchronization, Docker hello-world, an HTTP container workload and absence of failed units. Test shutdown/reboot and another fresh instance.
 5. Investigate every unexplained failure; do not mark unrun/expected checks as passed.
 6. Re-run build/acceptance if code, package inputs or configuration change. Review configuration cleanup and ensure no machine IDs, host keys, accounts, authorized keys, test credentials or proxy secrets remain in the candidate.
-7. Measure build time, peak disk usage and final artifact size and update documentation with the observed environment.
-8. Obtain the repository owner's approval before merging or creating a tag/release. Version promotion must update the build version and metadata consistently; the root `VERSION` file now selects `0.2` for the final candidate, which still requires building and acceptance testing.
-9. Publish a **new** release with image, verified SHA256, source commit, package manifest, build metadata, supported firmware/datasource configuration and known limitations. Re-download and reverify published artifacts before announcing them. Never modify v0.1 assets.
+7. Record build time, peak disk usage and final artifact size with the observed environment. v0.2 recorded only the published artifact size.
+8. Obtain the repository owner's approval before merging or creating a tag/release. Version promotion must update `VERSION` and all metadata consistently; a stable version must be built from a clean tree.
+9. Publish a **new** release with image, verified SHA256, `SHA256SUMS`, SPDX SBOM, signature (if policy requires it), source commit, package manifest, build metadata, supported firmware/datasource configuration and known limitations. Re-download and reverify published artifacts before announcing them. Never modify v0.1 or v0.2 assets.
+
+The one-shot `scripts/publish-v0.2.sh` has already been used. It refuses to run while tag `v0.2` exists; keep it for provenance and do not force-overwrite the tag.
 
 Byte-reproducibility is a separate project milestone requiring snapshot/version pins, deterministic filesystem/partition metadata, timestamp handling and independent rebuild comparison. Successful repeatable builds alone do not meet that claim.

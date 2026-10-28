@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs only inside a disposable guest, over the harness's authenticated SSH.
 set -Eeuo pipefail
-[[ $(cat /usr/share/vps-linux/version) =~ ^0\.2(-dev)?$ ]] || { echo 'Not a v0.2 test guest' >&2; exit 1; }
+[[ $(cat /usr/share/vps-linux/version) =~ ^[0-9]+\.[0-9]+(-dev)?$ ]] || { echo 'Not a VPS Linux test guest' >&2; exit 1; }
 wait_for_time() {
     local deadline=$((SECONDS + 180))
     until [[ $(timedatectl show -p NTPSynchronized --value) == yes ]]; do

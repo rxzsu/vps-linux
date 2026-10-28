@@ -41,7 +41,7 @@ export function initializeLocaleMetadata() {
     document.documentElement.lang = locale.value;
     document.title = t("VPS Linux — Your server. Nothing unnecessary.");
     const description = t(
-      "A lightweight Debian 13 image for QEMU/KVM, Docker workloads and clean infrastructure. Explore VPS Linux v0.1.",
+      "A lightweight Debian 13 image for QEMU/KVM, Docker workloads and clean infrastructure. Explore VPS Linux v0.2.",
     );
     document
       .querySelector('meta[name="description"]')

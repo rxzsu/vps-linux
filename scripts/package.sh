@@ -28,9 +28,28 @@ metadata = {
     'package_manifest_sha256': hashlib.sha256((bundle / 'packages.tsv').read_bytes()).hexdigest(),
     'image_sha256': (bundle / f'vps-linux-v{version}.qcow2.sha256').read_text().split()[0],
     'virtual_size_bytes': 8 * 1024**3,
+    'sbom': 'sbom.spdx.json',
+    'artifact_checksums': 'SHA256SUMS',
     'byte_reproducibility_verified': False, 'boot_smoke_test': 'not_run',
     'secure_boot_supported': False,
 }
 (bundle / 'build.json').write_text(json.dumps(metadata, indent=2) + '\n')
 PY
+created=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["created_utc"])' "$bundle/build.json")
+python3 "$PROJECT_DIR/scripts/generate-sbom.py" \
+    "$bundle/packages.tsv" "$bundle/sbom.spdx.json" \
+    --version "$VPS_LINUX_VERSION" --commit "$VPS_LINUX_SOURCE_COMMIT" --created "$created"
+(cd "$bundle" && sha256sum \
+    "vps-linux-v${VPS_LINUX_VERSION}.qcow2" \
+    "vps-linux-v${VPS_LINUX_VERSION}.qcow2.sha256" \
+    packages.tsv build.json sbom.spdx.json > SHA256SUMS)
+# Optional local signing. CI uses keyless cosign on SHA256SUMS instead, so no
+# private key ever needs to exist in this repository or on a runner.
+if [[ -n ${VPS_LINUX_SIGNING_KEY:-} ]]; then
+    command -v minisign >/dev/null || die 'VPS_LINUX_SIGNING_KEY is set but minisign is missing.'
+    [[ -f $VPS_LINUX_SIGNING_KEY ]] || die "Signing key not found: $VPS_LINUX_SIGNING_KEY"
+    minisign -Sm "$bundle/SHA256SUMS" -s "$VPS_LINUX_SIGNING_KEY" \
+        -t "vps-linux v${VPS_LINUX_VERSION} ${VPS_LINUX_SOURCE_COMMIT}"
+    log 'Signed SHA256SUMS with the local minisign key.'
+fi
 chmod 444 "$bundle"/*

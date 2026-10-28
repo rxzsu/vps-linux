@@ -54,7 +54,7 @@ class CleanupSafety(unittest.TestCase):
                  'CASE_CANDIDATE': str(candidate)}, capture_output=True, text=True)
 
     def test_valid_work_removed_without_following_internal_symlink(self):
-        work = self.output / '.v0.2-build.valid'
+        work = self.output / '.vps-linux-build.valid'
         work.mkdir()
         (work / '.vps-linux-work').touch()
         (work / 'external-link').symlink_to(self.outside, target_is_directory=True)
@@ -69,13 +69,13 @@ class CleanupSafety(unittest.TestCase):
 
     def test_symlink_work_rejected(self):
         (self.outside / '.vps-linux-work').touch()
-        link = self.output / '.v0.2-build.link'
+        link = self.output / '.vps-linux-build.link'
         link.symlink_to(self.outside, target_is_directory=True)
         self.assertNotEqual(self.cleanup(link).returncode, 0)
         self.assertTrue((self.outside / 'sentinel').exists())
 
     def test_unmarked_directory_rejected(self):
-        work = self.output / '.v0.2-build.unmarked'
+        work = self.output / '.vps-linux-build.unmarked'
         work.mkdir()
         self.assertNotEqual(self.cleanup(work).returncode, 0)
         self.assertTrue(work.exists())

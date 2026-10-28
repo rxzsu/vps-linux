@@ -13,7 +13,15 @@ source /etc/os-release
 if getent passwd vpsadmin >/dev/null; then echo "Legacy account remains" >&2; exit 1; fi
 [[ $(stat -fc %T /sys/fs/cgroup) == cgroup2fs ]]
 ip -4 route show default | grep -q '^default '
-systemctl is-active --quiet systemd-networkd.service systemd-resolved.service systemd-timesyncd.service docker.service
+systemctl is-active --quiet systemd-networkd.service systemd-resolved.service systemd-timesyncd.service docker.service qemu-guest-agent.service apt-daily.timer apt-daily-upgrade.timer
+# Docker: log rotation/live-restore and the disk/log safety limits must be effective.
+[[ $(sudo -n docker info --format '{{.LiveRestoreEnabled}}') == true ]]
+[[ $(sudo -n docker info --format '{{.LoggingDriver}}') == json-file ]]
+grep -Fxq 'SystemMaxUse=200M' /etc/systemd/journald.conf.d/99-vps-linux.conf
+grep -Eq '^[[:space:]]*Unattended-Upgrade::Allowed-Origins' /etc/apt/apt.conf.d/52-vps-linux-unattended-upgrades
+# shellcheck disable=SC2016  # Literal ${distro_codename} is expanded by unattended-upgrades.
+grep -Fq 'Debian:${distro_codename}-security' /etc/apt/apt.conf.d/52-vps-linux-unattended-upgrades
+grep -Fq 'Unattended-Upgrade::Automatic-Reboot "false";' /etc/apt/apt.conf.d/52-vps-linux-unattended-upgrades
 cloud-init status --wait --long
 [[ -z $(systemctl --failed --no-legend --plain) ]]
 config=$(sudo -n /usr/sbin/sshd -T)

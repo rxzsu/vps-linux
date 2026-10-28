@@ -20,6 +20,8 @@ sudo
 docker.io
 docker-cli
 docker-compose
+qemu-guest-agent
+unattended-upgrades
 iproute2
 iputils-ping
 curl

@@ -1,0 +1,6 @@
+// Security updates only. Never reboot automatically: the operator decides.
+Unattended-Upgrade::Allowed-Origins {
+    "Debian:${distro_codename}-security";
+};
+Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::Remove-Unused-Dependencies "false";

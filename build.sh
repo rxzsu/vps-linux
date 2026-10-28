@@ -23,7 +23,7 @@ export VPS_LINUX_SOURCE_COMMIT
 ensure_output
 exec 9>"$OUTPUT_DIR/.build.lock"
 flock -n 9 || die 'Another build holds output/.build.lock.'
-VPS_LINUX_WORK=$(mktemp -d "$OUTPUT_DIR/.v0.2-build.XXXXXXXX")
+VPS_LINUX_WORK=$(mktemp -d "$OUTPUT_DIR/.vps-linux-build.XXXXXXXX")
 export VPS_LINUX_WORK
 : > "$VPS_LINUX_WORK/.vps-linux-work"
 active_pid=''

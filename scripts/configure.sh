@@ -13,6 +13,11 @@ install -Dm644 "$PROJECT_DIR/configs/network/10-vps-linux.network" "$root/etc/sy
 install -Dm644 "$PROJECT_DIR/configs/zram/zram-generator.conf" "$root/etc/systemd/zram-generator.conf"
 install -Dm644 "$PROJECT_DIR/configs/systemd/grub-defaults.cfg" "$root/etc/default/grub.d/99-vps-linux.cfg"
 install -Dm644 "$PROJECT_DIR/configs/docker/daemon.json" "$root/etc/docker/daemon.json"
+install -Dm644 "$PROJECT_DIR/configs/systemd/journald.conf.d/99-vps-linux.conf" "$root/etc/systemd/journald.conf.d/99-vps-linux.conf"
+install -Dm644 "$PROJECT_DIR/configs/apt/20auto-upgrades" "$root/etc/apt/apt.conf.d/20auto-upgrades"
+install -Dm644 "$PROJECT_DIR/configs/apt/52-vps-linux-unattended-upgrades" "$root/etc/apt/apt.conf.d/52-vps-linux-unattended-upgrades"
+# Keep the guest agent enabled but harmless on hosts without the virtio port.
+install -Dm644 "$PROJECT_DIR/configs/systemd/qemu-guest-agent.conf" "$root/etc/systemd/system/qemu-guest-agent.service.d/99-vps-linux.conf"
 printf 'vps-linux\n' > "$root/etc/hostname"
 printf '127.0.0.1 localhost\n127.0.1.1 vps-linux\n::1 localhost ip6-localhost ip6-loopback\n' > "$root/etc/hosts"
 printf 'LABEL=VPS_ROOT / ext4 defaults 0 1\nLABEL=VPS_EFI /boot/efi vfat umask=0077 0 2\n' > "$root/etc/fstab"
@@ -35,7 +40,7 @@ ssh_config=$(chroot "$root" /usr/sbin/sshd -T)
 for policy in 'passwordauthentication no' 'kbdinteractiveauthentication no' 'permitrootlogin no' 'pubkeyauthentication yes'; do
     grep -Fxq "$policy" <<< "$ssh_config" || die "Missing effective SSH policy: $policy"
 done
-systemctl --root="$root" enable systemd-networkd.service systemd-resolved.service systemd-timesyncd.service ssh.service docker.service
+systemctl --root="$root" enable systemd-networkd.service systemd-resolved.service systemd-timesyncd.service ssh.service docker.service qemu-guest-agent.service apt-daily.timer apt-daily-upgrade.timer
 # cloud-init units are linked by their package; explicitly enable the boot stages.
 systemctl --root="$root" enable cloud-init-main.service cloud-init-local.service cloud-init-network.service cloud-config.service cloud-final.service
 # dpkg-query owns these format variables.

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Maintainer command: upload the owner's tested artifact, verify the draft, publish.
+# One-shot maintainer command used to publish v0.2 on 2026-10-28. Retained for provenance.
+# It refuses to run once tag v0.2 exists, so it cannot overwrite the published release.
 set -Eeuo pipefail
 umask 077
 if [[ ${1:-} == --help || ${1:-} == -h ]]; then
-    printf 'Usage: ./scripts/publish-v0.2.sh\nPublishes the specifically tested clean 0.2 candidate to rxzsu/vps-linux.\n'; exit 0
+    printf 'Usage: ./scripts/publish-v0.2.sh\nRetained v0.2 publication helper. The release is already published; the tag is immutable.\n'; exit 0
 fi
 [[ $# == 0 ]] || { echo 'Use --help' >&2; exit 1; }
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)

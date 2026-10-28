@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Select only stable-version candidates; never silently select a v0.2-dev image.
+# Select only candidates matching VERSION; never silently select a different version.
 set -Eeuo pipefail
 PROJECT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 [[ $# == 0 ]] || { echo 'Usage: ./tests/release-check.sh' >&2; exit 1; }

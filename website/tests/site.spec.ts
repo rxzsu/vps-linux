@@ -11,10 +11,10 @@ test("renders the site, navigation, documentation and release links", async ({
   );
   await expect(page.getByText("x86_64", { exact: true }).first()).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Download v0.1" }).first(),
+    page.getByRole("link", { name: "Download v0.2" }).first(),
   ).toHaveAttribute(
     "href",
-    "https://github.com/rxzsu/vps-linux/releases/download/v0.1/vps-linux-v0.1-release.qcow2",
+    "https://github.com/rxzsu/vps-linux/releases/download/v0.2/vps-linux-v0.2.qcow2",
   );
   await expect(
     page.getByRole("link", { name: "SHA256 checksum" }),
@@ -138,8 +138,8 @@ test("switches between Russian and English and preserves the choice", async ({
     page.getByRole("button", { name: "Скопировать команду" }).first(),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Скачать v0.1" }).first(),
-  ).toHaveAttribute("href", /vps-linux-v0\.1-release\.qcow2$/);
+    page.getByRole("link", { name: "Скачать v0.2" }).first(),
+  ).toHaveAttribute("href", /vps-linux-v0\.2\.qcow2$/);
   await expect(page.locator(".terminal-bottom")).toContainText(
     "Все системы готовы",
   );

@@ -14,12 +14,12 @@ ensure_output() {
 }
 require_work() {
     [[ -n ${VPS_LINUX_WORK:-} && ! -L $VPS_LINUX_WORK ]] || die 'Missing safe build workspace; run build.sh.'
-    [[ $VPS_LINUX_WORK == "$OUTPUT_DIR"/.v0.2-build.* && -f $VPS_LINUX_WORK/.vps-linux-work ]] || die 'Invalid build workspace marker.'
+    [[ $VPS_LINUX_WORK == "$OUTPUT_DIR"/.vps-linux-build.* && -f $VPS_LINUX_WORK/.vps-linux-work ]] || die 'Invalid build workspace marker.'
     [[ $(realpath -e -- "$VPS_LINUX_WORK") == "$VPS_LINUX_WORK" ]] || die 'Build workspace resolves outside output/.'
 }
 safe_remove_work() {
     local candidate=$1
-    [[ -d $candidate && ! -L $candidate && $candidate == "$OUTPUT_DIR"/.v0.2-build.* && -f $candidate/.vps-linux-work ]] || { log 'Refusing unsafe cleanup path.'; return 1; }
+    [[ -d $candidate && ! -L $candidate && $candidate == "$OUTPUT_DIR"/.vps-linux-build.* && -f $candidate/.vps-linux-work ]] || { log 'Refusing unsafe cleanup path.'; return 1; }
     [[ $(realpath -e -- "$candidate") == "$candidate" ]] || return 1
     # Refuse cleanup if a mount remains, including same-filesystem bind mounts.
     python3 - "$candidate" <<'PY'

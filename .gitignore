@@ -42,6 +42,7 @@ website/test-results/
 website/playwright-report/
 website/.env*
 !website/.env.example
+.vercel/
 
 # All intermediate OS build files (not source)
 /build/
