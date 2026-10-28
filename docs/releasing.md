@@ -2,7 +2,7 @@
 
 v0.1 and v0.2 are published and immutable. Do not replace, retag or relabel their QCOW2/checksum assets. v0.2 was published from clean source `7d0ec202786edc037816a946146f1b40912515eb`; its acceptance and publication evidence is in [validation.md](validation.md).
 
-Current development is on `main` with `VERSION` = `0.3-dev`. Any change after the v0.2 tag belongs to the next version; bumping `VERSION` before a stable build is mandatory so a new artifact never reuses a published version label.
+The stable v0.3 candidate on `main` uses `VERSION` = `0.3`. Run the manual workflow with build_and_boot, online_tests and publish_release enabled to rebuild, validate and publish `v0.3` as the latest stable release. The earlier `v0.3-dev.*` prerelease remains a separate development artifact. After publication, bump VERSION before further image changes; never reuse a published stable version label.
 
 Before considering the next stable release:
 
