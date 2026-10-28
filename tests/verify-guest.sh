@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 # Run remotely over the test instance's authenticated SSH connection.
 set -Eeuo pipefail
+# SSH can be available while Docker and other boot jobs are still starting.
+# Wait for systemd to finish booting, without starting/restarting any services.
+boot_state=''
+if ! boot_state=$(timeout 180 systemctl is-system-running --wait); then
+    echo "Guest boot did not reach a healthy running state: $boot_state" >&2
+    systemctl --failed --no-legend --plain >&2 || true
+    sudo -n journalctl -b -u docker.service -u containerd.service -n 60 --no-pager >&2 || true
+    exit 1
+fi
+[[ $boot_state == running ]] || { echo "Unexpected system state: $boot_state" >&2; exit 1; }
 expected_hostname=$1
 [[ $(hostname) == "$expected_hostname" ]]
 [[ $(uname -m) == x86_64 ]]
