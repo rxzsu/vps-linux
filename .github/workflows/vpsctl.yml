@@ -1,0 +1,40 @@
+name: Validate vpsctl
+on:
+  push:
+    paths: ['vpsctl/**', '.github/workflows/vpsctl.yml']
+  pull_request:
+    paths: ['vpsctl/**', '.github/workflows/vpsctl.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: vpsctl
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install exact MSRV
+        run: rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            vpsctl/target/
+          key: vpsctl-${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-${{ hashFiles('vpsctl/Cargo.lock') }}
+      - name: Format
+        run: cargo +1.99.0 fmt --all -- --check
+      - name: Clippy
+        run: cargo +1.99.0 clippy --locked --all-targets --all-features -- -D warnings
+      - name: Unit and CLI tests
+        run: cargo +1.99.0 test --locked --all-targets
+      - name: TUI terminal restoration tests
+        run: |
+          cargo +1.99.0 build --locked
+          python3 tests/tui_pty.py
+      - name: Release build on MSRV
+        run: cargo +1.99.0 build --locked --release

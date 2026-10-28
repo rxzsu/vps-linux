@@ -69,3 +69,9 @@ bun run test
 ```
 
 See [website/README.md](website/README.md) for Vercel import settings, the custom-domain checklist and validation notes. The OS validation workflow does not deploy the website or publish images.
+
+## vpsctl
+
+The separate [vpsctl Rust utility](vpsctl/README.md) provides a read-only CLI and
+terminal control center. Version 0.1.0 is developed independently of the image;
+it is not included in the v0.3 image build or existing release assets.

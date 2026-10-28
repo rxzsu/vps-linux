@@ -57,3 +57,6 @@ __pycache__/
 
 # CI host package/appliance cache
 /.ci-cache/
+
+# Rust utility build output
+/vpsctl/target/

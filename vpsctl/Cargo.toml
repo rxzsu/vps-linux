@@ -1,0 +1,16 @@
+[package]
+name = "vpsctl"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+description = "Read-only VPS Linux administration and diagnostics"
+publish = false
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+crossterm = "0.29"
+ratatui = { version = "0.30", default-features = false, features = ["crossterm_0_29"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
