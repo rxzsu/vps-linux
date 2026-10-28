@@ -109,15 +109,15 @@ const docs = computed(() => [
   {
     title: t("cloud-init & SSH provisioning"),
     text: t(
-      "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. A verified user-data template and default login username are not yet documented; confirm these before deployment.",
+      "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. The v0.1 NoCloud test provisioned the debian user with passwordless sudo. Supply your own public key before booting; no shared credentials are provided.",
     ),
   },
   {
     title: t("Docker & Compose"),
     text: t(
-      "The image includes Docker Engine and Docker Compose V2. After logging into the instance, inspect the installed versions and daemon status. Docker permissions depend on the provisioned user.",
+      "The v0.1 image includes Debian Docker Engine and Compose V2. Its verified Compose command is docker-compose; the docker compose interface was not verified for v0.1. After login, check versions and daemon status. Docker permissions depend on the provisioned user.",
     ),
-    code: "docker --version\ndocker compose version\nsystemctl is-active docker",
+    code: "docker --version\ndocker-compose version\nsystemctl is-active docker",
   },
   {
     title: t("Networking & security"),
