@@ -15,12 +15,19 @@ source_dirty=false
 export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct -- .)}
 [[ $SOURCE_DATE_EPOCH =~ ^[0-9]+$ ]] || { echo 'Invalid SOURCE_DATE_EPOCH' >&2; exit 1; }
 cargo +1.99.0 build --locked --release --target x86_64-unknown-linux-gnu
+cargo +1.99.0 run --locked --release --bin vpsctl-docs -- target/x86_64-unknown-linux-gnu/release/docs
 work=$(mktemp -d /tmp/vpsctl-deb.XXXXXXXX)
 trap 'rm -rf -- "$work"' EXIT
 mkdir -p "$work/debian/vpsctl/DEBIAN" dist
 install -Dm755 target/x86_64-unknown-linux-gnu/release/vpsctl "$work/debian/vpsctl/usr/bin/vpsctl"
 install -Dm644 README.md "$work/debian/vpsctl/usr/share/doc/vpsctl/README.md"
 install -Dm644 ../LICENSE "$work/debian/vpsctl/usr/share/doc/vpsctl/copyright"
+gzip -n -9 -c target/x86_64-unknown-linux-gnu/release/docs/vpsctl.1 > "$work/man.gz"
+install -Dm644 "$work/man.gz" "$work/debian/vpsctl/usr/share/man/man1/vpsctl.1.gz"
+install -Dm644 target/x86_64-unknown-linux-gnu/release/docs/vpsctl.bash \
+    "$work/debian/vpsctl/usr/share/bash-completion/completions/vpsctl"
+install -Dm644 target/x86_64-unknown-linux-gnu/release/docs/_vpsctl \
+    "$work/debian/vpsctl/usr/share/zsh/vendor-completions/_vpsctl"
 # dpkg-shlibdeps derives the glibc floor from the actual binary ABI. Do not
 # assume a binary built on a newer runner works on Debian 13.
 command -v dpkg-shlibdeps >/dev/null || { echo 'Install dpkg-dev for ABI dependency scanning' >&2; exit 1; }

@@ -26,6 +26,12 @@ jobs:
             ~/.cargo/git/db/
             vpsctl/target/
           key: vpsctl-${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-${{ hashFiles('vpsctl/Cargo.lock') }}
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2 (cargo-deny)
+        with:
+          tool: cargo-deny
+      - name: Dependency advisories, licenses, bans and sources
+        run: cargo +1.99.0 deny --locked check advisories bans licenses sources
       - name: Format
         run: cargo +1.99.0 fmt --all -- --check
       - name: Clippy

@@ -23,7 +23,9 @@ def validate(package, version, commit):
     for name, value in expected.items():
         if field(name) != value:
             raise ValueError('vpsctl package provenance mismatch: ' + name)
-    allowed = {'usr/bin/vpsctl', 'usr/share/doc/vpsctl/README.md', 'usr/share/doc/vpsctl/copyright'}
+    allowed = {'usr/bin/vpsctl', 'usr/share/doc/vpsctl/README.md', 'usr/share/doc/vpsctl/copyright',
+               'usr/share/man/man1/vpsctl.1.gz', 'usr/share/bash-completion/completions/vpsctl',
+               'usr/share/zsh/vendor-completions/_vpsctl'}
     # cap decompression by streaming the tar rather than buffering a tar bomb.
     for flag, controls in [('--ctrl-tarfile', True), ('--fsys-tarfile', False)]:
         child = subprocess.Popen(['dpkg-deb', flag, str(package)], stdout=subprocess.PIPE)

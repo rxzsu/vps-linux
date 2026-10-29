@@ -30,5 +30,15 @@ class DebianPackage(unittest.TestCase):
             self.assertEqual(binary.stat().st_mode & 0o7777, 0o755)
 
 
+    def test_man_page_and_shell_completions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            subprocess.run(['dpkg-deb', '-R', str(PACKAGE), directory], check=True)
+            root = pathlib.Path(directory)
+            for name in ('usr/share/man/man1/vpsctl.1.gz',
+                         'usr/share/bash-completion/completions/vpsctl',
+                         'usr/share/zsh/vendor-completions/_vpsctl'):
+                self.assertTrue((root / name).is_file(), f'missing {name}')
+
+
 if __name__ == '__main__':
     unittest.main()

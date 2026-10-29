@@ -45,9 +45,20 @@ PY_APT
 cloud-init status --wait --long
 [[ -z $(systemctl --failed --no-legend --plain) ]]
 config=$(sudo -n /usr/sbin/sshd -T)
-for policy in 'passwordauthentication no' 'kbdinteractiveauthentication no' 'permitrootlogin no' 'pubkeyauthentication yes'; do
+for policy in 'passwordauthentication no' 'kbdinteractiveauthentication no' 'permitrootlogin no' 'pubkeyauthentication yes' 'maxauthtries 3' 'clientaliveinterval 300' 'requiredrsasize 3072'; do
     grep -Fxq "$policy" <<< "$config"
 done
+# Hardened kernel/network defaults, disabled core dumps and weekly TRIM must be effective.
+[[ $(sysctl -n kernel.dmesg_restrict) == 1 ]]
+[[ $(sysctl -n kernel.kptr_restrict) == 2 ]]
+[[ $(sysctl -n kernel.unprivileged_bpf_disabled) == 1 ]]
+[[ $(sysctl -n fs.suid_dumpable) == 0 ]]
+[[ $(sysctl -n fs.protected_symlinks) == 1 ]]
+[[ $(sysctl -n net.ipv4.conf.all.accept_redirects) == 0 ]]
+[[ $(sysctl -n net.ipv4.conf.all.send_redirects) == 0 ]]
+grep -Fxq 'Storage=none' /etc/systemd/coredump.conf.d/99-vps-linux.conf
+[[ $(systemctl is-enabled fstrim.timer) == enabled ]]
+[[ -x /etc/update-motd.d/10-vps-linux ]]
 sudo -n docker info --format '{{.Driver}} {{.CgroupVersion}}' | grep -Fxq 'overlay2 2'
 sudo -n docker-compose version
 sudo -n docker compose version

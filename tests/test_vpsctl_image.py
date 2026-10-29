@@ -29,19 +29,29 @@ class VpsctlImage(unittest.TestCase):
         (self.tree / 'DEBIAN').mkdir(parents=True)
         (self.tree / 'usr/bin').mkdir(parents=True)
         (self.tree / 'usr/share/doc/vpsctl').mkdir(parents=True)
+        (self.tree / 'usr/share/man/man1').mkdir(parents=True)
+        (self.tree / 'usr/share/bash-completion/completions').mkdir(parents=True)
+        (self.tree / 'usr/share/zsh/vendor-completions').mkdir(parents=True)
         self.control = f'Package: vpsctl\nVersion: {self.version}\nArchitecture: amd64\nMaintainer: Test <test@example.invalid>\nDescription: Fixture\nX-Vpsctl-Source-Commit: {self.commit}\nX-Vpsctl-Source-Dirty: false\n'
         (self.tree / 'DEBIAN/control').write_text(self.control)
         shutil.copy('/bin/true', self.tree / 'usr/bin/vpsctl')
         (self.tree / 'usr/bin/vpsctl').chmod(0o755)
         for name in ('README.md', 'copyright'):
             (self.tree / 'usr/share/doc/vpsctl' / name).write_text('fixture\n')
+        for name in ('usr/share/man/man1/vpsctl.1.gz', 'usr/share/bash-completion/completions/vpsctl',
+                     'usr/share/zsh/vendor-completions/_vpsctl'):
+            (self.tree / name).write_text('fixture\n')
         self.package = self.root / 'vpsctl_0.4.0_amd64.deb'
         self.pack()
 
     def pack(self):
-        for directory in self.tree.rglob('*'):
-            if directory.is_dir():
-                directory.chmod(0o755)
+        # Normalize modes so the fixture does not depend on the builder's umask:
+        # the real package is built with umask 022 (directories 755, payload 644).
+        for entry in self.tree.rglob('*'):
+            if entry.is_dir():
+                entry.chmod(0o755)
+            elif entry.is_file() and self.tree / 'DEBIAN' not in entry.parents and entry != self.tree / 'usr/bin/vpsctl':
+                entry.chmod(0o644)
         (self.tree / 'DEBIAN/control').chmod(0o644)
         subprocess.run(['dpkg-deb', '--root-owner-group', '--build', str(self.tree), str(self.package)], check=True, capture_output=True)
 

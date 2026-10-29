@@ -189,6 +189,8 @@ jobs:
     permissions:
       contents: write
       actions: read
+      id-token: write  # Keyless GitHub artifact attestations for the published bundle.
+      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -201,6 +203,15 @@ jobs:
           digest-mismatch: error
       - run: sudo apt-get update && sudo apt-get install -y qemu-utils
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Attest verified bundle artifacts before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          files=()
+          for file in downloaded-bundle/*; do
+              [[ $file == *.sigstore.json ]] || files+=("$file")
+          done
+          gh attestation sign "${files[@]}" --repo "$GITHUB_REPOSITORY"
       - name: Verify artifact, create immutable tag and publish release
         env:
           GH_TOKEN: ${{ github.token }}

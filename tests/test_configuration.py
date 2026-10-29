@@ -86,6 +86,43 @@ class Policy(unittest.TestCase):
         self.assertIn('Unattended-Upgrade::Automatic-Reboot "false";', policy)
         self.assertIn('Unattended-Upgrade::Remove-Unused-Dependencies "false";', policy)
 
+    def test_sysctl_hardening_policy(self):
+        settings = {}
+        for line in (ROOT / 'configs/sysctl/90-vps-linux.conf').read_text().splitlines():
+            if line and not line.startswith('#'):
+                key, value = line.split('=', 1)
+                settings[key.strip()] = value.strip()
+        self.assertEqual(settings['kernel.dmesg_restrict'], '1')
+        self.assertEqual(settings['kernel.kptr_restrict'], '2')
+        self.assertEqual(settings['kernel.unprivileged_bpf_disabled'], '1')
+        self.assertEqual(settings['fs.suid_dumpable'], '0')
+        for key in ('fs.protected_hardlinks', 'fs.protected_symlinks'):
+            self.assertEqual(settings[key], '1')
+        for key in ('fs.protected_fifos', 'fs.protected_regular'):
+            self.assertEqual(settings[key], '2')
+        for key in ('net.ipv4.conf.all.accept_source_route', 'net.ipv4.conf.default.accept_source_route',
+                    'net.ipv4.conf.all.accept_redirects', 'net.ipv4.conf.default.accept_redirects',
+                    'net.ipv4.conf.all.send_redirects', 'net.ipv4.conf.default.send_redirects',
+                    'net.ipv6.conf.all.accept_redirects', 'net.ipv6.conf.default.accept_redirects'):
+            self.assertEqual(settings[key], '0')
+        self.assertEqual(settings['net.ipv4.tcp_syncookies'], '1')
+
+    def test_core_dumps_are_disabled(self):
+        coredump = (ROOT / 'configs/systemd/coredump.conf.d/99-vps-linux.conf').read_text()
+        self.assertIn('Storage=none', coredump)
+        self.assertIn('ProcessSizeMax=0', coredump)
+        manager = (ROOT / 'configs/systemd/system.conf.d/99-vps-linux.conf').read_text()
+        self.assertIn('DefaultLimitCORE=0', manager)
+
+    def test_ssh_brute_force_limits(self):
+        config = (ROOT / 'configs/ssh/00-vps-linux.conf').read_text()
+        for line in ('LoginGraceTime 20', 'MaxAuthTries 3', 'ClientAliveInterval 300',
+                     'ClientAliveCountMax 3', 'RequiredRSASize 3072'):
+            self.assertIn(line, config)
+
+    def test_motd_hint_is_executable(self):
+        self.assertTrue((ROOT / 'configs/motd/10-vps-linux').stat().st_mode & 0o111)
+
     def test_qemu_guest_agent_is_guarded(self):
         unit = (ROOT / 'configs/systemd/qemu-guest-agent.conf').read_text()
         self.assertIn('ConditionPathExists=/dev/virtio-ports/org.qemu.guest_agent.0', unit)

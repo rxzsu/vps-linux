@@ -56,6 +56,10 @@ export GNUPGHOME="$VPS_LINUX_WORK/gnupg"
 export TMPDIR="$VPS_LINUX_WORK"
 export LIBGUESTFS_BACKEND=direct
 export VPS_LINUX_SOURCE_DIR="$PROJECT_DIR"
+# Anchor timestamps to the source commit; mmdebstrap and packaging tools honor
+# this where possible. Full byte-for-byte reproducibility is a separate milestone.
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git -c safe.directory="$PROJECT_DIR" -C "$PROJECT_DIR" log -1 --format=%ct HEAD)}
+[[ $SOURCE_DATE_EPOCH =~ ^[0-9]+$ ]] || die 'Invalid SOURCE_DATE_EPOCH from git history.'
 export DEBIAN_FRONTEND=noninteractive
 BUILD_ID="vps-linux-v${VPS_LINUX_VERSION}-$(date -u +%Y%m%dT%H%M%SZ)-${VPS_LINUX_SOURCE_COMMIT:0:12}"
 [[ ! -e $OUTPUT_DIR/$BUILD_ID ]] || die 'Build identifier already exists; retry after one second.'

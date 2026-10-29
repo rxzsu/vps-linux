@@ -173,4 +173,6 @@ updates where feasible and tested remote-safe rollback. No mutations are impleme
 Image builds require a package from the exact clean checkout. Packaging records
 X-Vpsctl-Source-Commit/Dirty; image preflight rejects stale/dirty provenance,
 symlinks, privileged payloads, extra files and maintainer scripts. Run packaging
-as your ordinary user after committing changes.
+as your ordinary user after committing changes. The package ships the binary,
+README/copyright, a generated man page (`vpsctl(1)`) and bash/zsh completions,
+all produced by `src/bin/vpsctl-docs.rs` during `scripts/package-deb.sh`.

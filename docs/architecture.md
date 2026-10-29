@@ -24,6 +24,11 @@ VPS Linux is a purpose-configured Debian server image, not a new distribution re
 - journald is capped at 200 MiB persistent / 50 MiB runtime storage. `unattended-upgrades` applies Debian security updates only and never reboots automatically.
 - `qemu-guest-agent` is enabled but starts only when `/dev/virtio-ports/org.qemu.guest_agent.0` exists, so hosts without the device do not report a failed unit.
 - systemd-zram-generator creates a 1024 MiB LZ4 swap device at priority 100.
+- A sysctl drop-in hardens kernel information disclosure (`dmesg_restrict`, `kptr_restrict`, unprivileged BPF disabled), filesystem link attacks and disables setuid core dumps; ICMP redirects and source-routed traffic are refused on all interfaces. Docker (root) is unaffected.
+- Core dumps are fully disabled: journald stores none (`Storage=none`, `ProcessSizeMax=0`) and systemd starts every process with `RLIMIT_CORE=0`.
+- SSH adds brute-force/idle limits for an Internet-facing host: `LoginGraceTime 20`, `MaxAuthTries 3`, `ClientAliveInterval 300` × `ClientAliveCountMax 3` and `RequiredRSASize 3072`. Idle but responsive sessions are kept.
+- `fstrim.timer` runs weekly so a larger host-side disk returns space after guest deletions; nftables is installed for owner firewall configuration (no rules are pre-shipped — the image never filters traffic by default).
+- A static motd hint points to vpsctl; no dynamic motd scripts or advertising.
 
 ## Compatibility boundaries
 

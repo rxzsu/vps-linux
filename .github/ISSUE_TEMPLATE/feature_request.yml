@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose an improvement to the image policy, build system or vpsctl.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Image policy / configuration
+        - Build system / release pipeline
+        - vpsctl
+        - Testing / acceptance
+        - Documentation
+        - Website
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What is missing or painful today? Link to the documented boundary in docs/architecture.md if the request touches a compatibility boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Project constraints
+      description: These rules are non-negotiable (see CONTRIBUTING.md).
+      options:
+        - label: This change does not modify published release assets
+        - label: vpsctl changes keep it read-only
+        - label: I agree to keep documentation claims accurate (no unrun checks marked as passed)

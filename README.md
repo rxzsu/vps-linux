@@ -53,6 +53,8 @@ The earlier v0.3 cycle added capped Docker container logs with `live-restore`, j
 - [Architecture and security policy](docs/architecture.md)
 - [QEMU/NoCloud testing and SSH provisioning](docs/testing.md)
 - [Release gates](docs/releasing.md)
+- [Reproducibility status](docs/reproducibility.md)
+- [Roadmap](docs/roadmap.md)
 
 Generated root filesystems, images, seeds and keys are ignored and must never be committed. Scripts accept file-backed images only and never target host physical disks.
 

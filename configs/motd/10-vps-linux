@@ -1,0 +1,4 @@
+#!/bin/sh
+# Static first-login hint; system facts come from vpsctl, not from motd scripts.
+version=$(cat /usr/share/vps-linux/version 2>/dev/null) || version='unknown'
+printf '\nVPS Linux %s. Diagnostics: "vpsctl status" (add --json for scripts), overview: "vpsctl --help".\n' "$version"

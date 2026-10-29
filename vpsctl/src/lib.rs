@@ -1,4 +1,5 @@
 //! Shared, read-only Linux observations. Missing evidence stays unknown.
+pub mod cli;
 pub mod network;
 pub mod security;
 pub mod system;

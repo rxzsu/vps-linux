@@ -19,6 +19,10 @@ install -Dm644 "$PROJECT_DIR/configs/network/10-vps-linux.network" "$root/etc/sy
 install -Dm644 "$PROJECT_DIR/configs/zram/zram-generator.conf" "$root/etc/systemd/zram-generator.conf"
 install -Dm644 "$PROJECT_DIR/configs/systemd/grub-defaults.cfg" "$root/etc/default/grub.d/99-vps-linux.cfg"
 install -Dm644 "$PROJECT_DIR/configs/docker/daemon.json" "$root/etc/docker/daemon.json"
+install -Dm644 "$PROJECT_DIR/configs/sysctl/90-vps-linux.conf" "$root/etc/sysctl.d/90-vps-linux.conf"
+install -Dm644 "$PROJECT_DIR/configs/systemd/coredump.conf.d/99-vps-linux.conf" "$root/etc/systemd/coredump.conf.d/99-vps-linux.conf"
+install -Dm644 "$PROJECT_DIR/configs/systemd/system.conf.d/99-vps-linux.conf" "$root/etc/systemd/system.conf.d/99-vps-linux.conf"
+install -Dm755 "$PROJECT_DIR/configs/motd/10-vps-linux" "$root/etc/update-motd.d/10-vps-linux"
 install -Dm644 "$PROJECT_DIR/configs/systemd/journald.conf.d/99-vps-linux.conf" "$root/etc/systemd/journald.conf.d/99-vps-linux.conf"
 install -Dm644 "$PROJECT_DIR/configs/apt/20auto-upgrades" "$root/etc/apt/apt.conf.d/20auto-upgrades"
 install -Dm644 "$PROJECT_DIR/configs/apt/52-vps-linux-unattended-upgrades" "$root/etc/apt/apt.conf.d/52-vps-linux-unattended-upgrades"
@@ -43,10 +47,10 @@ chroot "$root" cloud-init schema --config-file /tmp/vps-linux-user-data.example
 rm -f "$root/tmp/vps-linux-user-data.example"
 chroot "$root" /usr/sbin/sshd -t
 ssh_config=$(chroot "$root" /usr/sbin/sshd -T)
-for policy in 'passwordauthentication no' 'kbdinteractiveauthentication no' 'permitrootlogin no' 'pubkeyauthentication yes'; do
+for policy in 'passwordauthentication no' 'kbdinteractiveauthentication no' 'permitrootlogin no' 'pubkeyauthentication yes' 'maxauthtries 3' 'clientaliveinterval 300' 'requiredrsasize 3072'; do
     grep -Fxq "$policy" <<< "$ssh_config" || die "Missing effective SSH policy: $policy"
 done
-systemctl --root="$root" enable systemd-networkd.service systemd-resolved.service systemd-timesyncd.service ssh.service docker.service qemu-guest-agent.service apt-daily.timer apt-daily-upgrade.timer
+systemctl --root="$root" enable systemd-networkd.service systemd-resolved.service systemd-timesyncd.service ssh.service docker.service qemu-guest-agent.service apt-daily.timer apt-daily-upgrade.timer fstrim.timer
 # cloud-init units are linked by their package; explicitly enable the boot stages.
 systemctl --root="$root" enable cloud-init-main.service cloud-init-local.service cloud-init-network.service cloud-config.service cloud-final.service
 # dpkg-query owns these format variables.

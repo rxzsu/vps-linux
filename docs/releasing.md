@@ -16,9 +16,19 @@ Before considering the next stable release:
 8. Obtain the repository owner's approval before merging or creating a tag/release. Version promotion must update `VERSION` and all metadata consistently; a stable version must be built from a clean tree.
 9. Publish a **new** release with image, verified SHA256, `SHA256SUMS`, SPDX SBOM, signature (if policy requires it), source commit, package manifest, build metadata, supported firmware/datasource configuration and known limitations. Re-download and reverify published artifacts before announcing them. Never modify v0.1 or v0.2 assets.
 
+## Verifying a published release
+
+Beyond `SHA256SUMS` and the keyless cosign bundle, the publication job signs every bundle artifact (image, checksums, SBOM, package, metadata) with a keyless GitHub artifact attestation bound to this repository's workflow. Verify a downloaded file against the repository identity:
+
+```sh
+gh attestation verify <downloaded-file> --repo rxzsu/vps-linux
+```
+
+An attestation proves which workflow run produced the bytes; it does not prove boot acceptance — the acceptance evidence for each stable release stays in `docs/validation.md`.
+
 The one-shot `scripts/publish-v0.2.sh` has already been used. It refuses to run while tag `v0.2` exists; keep it for provenance and do not force-overwrite the tag.
 
-Byte-reproducibility is a separate project milestone requiring snapshot/version pins, deterministic filesystem/partition metadata, timestamp handling and independent rebuild comparison. Successful repeatable builds alone do not meet that claim.
+Byte-reproducibility is a separate project milestone requiring snapshot/version pins, deterministic filesystem/partition metadata, timestamp handling and independent rebuild comparison. Successful repeatable builds alone do not meet that claim. The current status, known nondeterminism sources and milestone path are tracked in [reproducibility.md](reproducibility.md).
 
 ## CI opt-in publication
 

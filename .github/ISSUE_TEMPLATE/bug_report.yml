@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in the image, build system or vpsctl does not work as documented.
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Built image (boot, cloud-init, networking, Docker, ZRAM)
+        - Build system (build.sh, scripts/)
+        - vpsctl CLI/TUI
+        - vpsctl Debian package
+        - Release bundle (SHA256SUMS, SBOM, signatures, attestations)
+        - Website
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Image version (e.g. v0.2) or the source commit you built from.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include exact commands, exit statuses and relevant logs. Do not redact evidence in a way that hides what actually ran.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Host OS, QEMU/KVM or VPS platform, firmware (UEFI), guest RAM/vCPU, datasource.
+    validations:
+      required: true
+  - type: checkboxes
+    id: integrity
+    attributes:
+      label: Artifact integrity
+      description: For image bugs — did you verify the SHA256/checksum manifest of the image you booted?
+      options:
+        - label: I verified the image checksums against SHA256SUMS before booting
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context

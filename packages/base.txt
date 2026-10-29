@@ -25,6 +25,7 @@ unattended-upgrades
 iproute2
 iputils-ping
 curl
+nftables
 locales
 
 # Runtime for the source-built Rust utility (no guest Rust compiler).
