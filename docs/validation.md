@@ -2,6 +2,35 @@
 
 Authoring environment: managed Debian 13 x86_64 container, 2026-10-28. No root privileges, mmdebstrap, libguestfs tools, qemu-img, QEMU or KVM device are available. `./build.sh --check` correctly exits nonzero before creating image files and lists missing prerequisites. User namespaces alone outside the command sandbox do not supply a full privileged build host.
 
+## Owner-reported v0.5-candidate acceptance — 2026-10-29
+
+The owner supplied terminal output from the local host for build
+`output/vps-linux-v0.4-20261029T164051Z-e9b701acbe29/vps-linux-v0.4.qcow2`,
+built from clean source `e9b701acbe29` while `VERSION` was still `0.4`
+(the candidate was relabeled `0.5` afterwards; the published stable `v0.4`
+dates from 2026-10-28 and does not contain this content). These are
+owner-reported results, not VM executions in a managed authoring container.
+
+- Full offline two-instance smoke passed on both instances: healthy systemd
+  boot, NoCloud completion without errors, effective unattended-upgrades
+  policy, both Compose interfaces, QEMU Guest Agent ping, effective hardened
+  SSH policy (`maxauthtries 3`, `clientaliveinterval 300`, `requiredrsasize 3072`
+  via `sshd -T`), effective sysctl hardening (`dmesg_restrict`, `kptr_restrict`,
+  unprivileged BPF, protected links, no redirects), disabled core dumps,
+  enabled `fstrim.timer`, motd script, ZRAM/LZ4 and no failed units. An earlier
+  run of the same suite failed only on a `verify-guest.sh` PATH issue
+  (`sysctl` resolved from `/usr/sbin` since `e9b701a`).
+- vpsctl 0.4.0 guest checks passed: installed package, JSON, security policy,
+  offline doctor, TUI session.
+- `--release-check` passed: NTP synchronization, Docker Hub nginx pull, HTTP
+  readiness, guest reboot with Docker HTTP service recovery, NTP
+  resynchronization and no failed units; two instances had distinct machine
+  IDs and SSH host keys; 8→10 GiB disk growth with matching GPT headers/CRCs.
+- Effective container log driver and rotation verified.
+
+This evidence does not transfer automatically to the future `v0.5` artifact;
+publication requires a fresh fully tested main run with `publish_release`.
+
 ## Executed
 
 - Bash syntax and ShellCheck 0.11.0 on all build/test shell scripts.

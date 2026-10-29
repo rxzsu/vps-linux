@@ -24,7 +24,7 @@ Executed on the development Debian 13 x86_64 container with
 24 utility/terminal/package tests passed in total. No package installation, root
 or Docker daemon was needed. The GitHub Actions package job was authored but not
 observed executing here. Debian 13 guest installation/boot acceptance remains a
-follow-up before image integration. Image integration now targets VPS Linux 0.4; published releases are unchanged. Guest acceptance code is included but has not executed in this environment.
+follow-up before image integration. Image integration now targets VPS Linux 0.5 (vpsctl 0.5.0 adds the man page and shell completions); vpsctl 0.4.0 remains installed in the published v0.4 image and published releases are unchanged. Guest acceptance code is included but has not executed in this environment.
 
 Image integration adds 6 rootless package/bundle regression tests (included in
 the 66 above), with real .deb and sparse QCOW2 fixtures. They verify provenance,

@@ -1,6 +1,6 @@
 # Building VPS Linux
 
-This document describes the v0.4 candidate, including vpsctl 0.4.0. Existing published images remain unchanged. Byte-for-byte reproducibility is not claimed. See [validation status](validation.md) for what was actually executed.
+This document describes the v0.5 candidate, including vpsctl 0.5.0. Existing published images remain unchanged. Byte-for-byte reproducibility is not claimed. See [validation status](validation.md) for what was actually executed.
 
 ## Supported host target
 
@@ -44,7 +44,7 @@ A successful build prints a path such as:
 
 ```text
 output/vps-linux-v0.4-<UTC timestamp>-<commit>/
-  vps-linux-v0.4.qcow2
+  vps-linux-v0.5.qcow2
   vps-linux-v0.4.qcow2.sha256
   vpsctl_0.4.0_amd64.deb
   packages.tsv

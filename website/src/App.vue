@@ -29,8 +29,8 @@ const { locale, t, setLocale } = useLocale();
 const menu = ref(false);
 const reduced = useReducedMotion();
 const repo = "https://github.com/rxzsu/vps-linux";
-const release = `${repo}/releases/tag/v0.2`;
-const asset = `${repo}/releases/download/v0.2/vps-linux-v0.2.qcow2`;
+const release = `${repo}/releases/tag/v0.4`;
+const asset = `${repo}/releases/download/v0.4/vps-linux-v0.4.qcow2`;
 const features = computed(() => [
   {
     icon: Box,
@@ -90,15 +90,15 @@ const docs = computed(() => [
   {
     title: t("Overview & requirements"),
     text: t(
-      "VPS Linux v0.2 is an independent Debian 13 (Trixie), x86_64 image. Use QEMU/KVM-compatible virtualization with UEFI support. The tested configuration is 2 vCPUs and 2 GiB RAM; the image has an 8 GiB virtual disk.",
+      "VPS Linux v0.4 is an independent Debian 13 (Trixie), x86_64 image. Use QEMU/KVM-compatible virtualization with UEFI support. The tested configuration is 2 vCPUs and 2 GiB RAM; the image has an 8 GiB virtual disk.",
     ),
   },
   {
     title: t("Download & verify"),
     text: t(
-      "Download the QCOW2 image and its SHA256 file from the same v0.2 GitHub release. In the download directory, verify the image before importing it:",
+      "Download the QCOW2 image and its SHA256 file from the same v0.4 GitHub release. In the download directory, verify the image before importing it:",
     ),
-    code: "sha256sum -c vps-linux-v0.2.qcow2.sha256",
+    code: "sha256sum -c vps-linux-v0.4.qcow2.sha256",
   },
   {
     title: t("Boot with QEMU/KVM"),
@@ -109,13 +109,13 @@ const docs = computed(() => [
   {
     title: t("cloud-init & SSH provisioning"),
     text: t(
-      "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. The v0.2 NoCloud test provisioned the debian user with passwordless sudo. Supply your own public key before booting; no shared credentials are provided.",
+      "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. The v0.4 NoCloud test provisioned the debian user with passwordless sudo. Supply your own public key before booting; no shared credentials are provided.",
     ),
   },
   {
     title: t("Docker & Compose"),
     text: t(
-      "The v0.2 image includes Debian Docker Engine and Compose V2. Both docker-compose and docker compose interfaces were verified for v0.2. After login, check versions and daemon status. Docker permissions depend on the provisioned user.",
+      "The v0.4 image includes Debian Docker Engine and Compose V2. Both docker-compose and docker compose interfaces were verified for v0.4. After login, check versions and daemon status. Docker permissions depend on the provisioned user.",
     ),
     code: "docker --version\ndocker-compose version\ndocker compose version\nsystemctl is-active docker",
   },
@@ -128,7 +128,7 @@ const docs = computed(() => [
   {
     title: t("Known limitations"),
     text: t(
-      "v0.2 uses a source-controlled, automated build system. Byte-for-byte reproducibility is not claimed, and package inputs remain moving Debian Trixie archives. Cloud providers must support custom QCOW2 import or a compatible conversion workflow. Compatibility with every provider is not guaranteed.",
+      "v0.4 uses a source-controlled, automated build system. Byte-for-byte reproducibility is not claimed, and package inputs remain moving Debian Trixie archives. Cloud providers must support custom QCOW2 import or a compatible conversion workflow. Compatibility with every provider is not guaranteed.",
     ),
   },
 ]);
@@ -213,7 +213,7 @@ async function copy(code: string) {
         :transition="{ duration: 0.65 }"
         class="hero-copy"
         ><a class="release-pill" :href="release"
-          ><span class="status-dot"></span>{{ t("VPS Linux v0.2 is here")
+          ><span class="status-dot"></span>{{ t("VPS Linux v0.4 is here")
           }}<span class="pill-divider"></span>{{ t("Meet the release")
           }}<ArrowRight :size="13"
         /></a>
@@ -235,7 +235,7 @@ async function copy(code: string) {
         </p>
         <div class="hero-actions">
           <a class="button primary" :href="asset"
-            ><Download :size="17" />{{ t("Download v0.2")
+            ><Download :size="17" />{{ t("Download v0.4")
             }}<ArrowUpRight :size="16" /></a
           ><a class="button secondary" :href="repo"
             ><Github :size="17" />{{ t("Explore on GitHub") }}</a
@@ -407,7 +407,7 @@ async function copy(code: string) {
       <div class="download-panel">
         <div>
           <div class="eyebrow">
-            <span class="status-dot"></span>{{ t("AVAILABLE NOW / v0.2") }}
+            <span class="status-dot"></span>{{ t("AVAILABLE NOW / v0.4") }}
           </div>
           <h2>
             {{ t("Your next deployment") }}<br />{{
@@ -421,7 +421,7 @@ async function copy(code: string) {
           </div>
           <div class="hero-actions">
             <a class="button primary" :href="asset"
-              ><Download :size="18" />{{ t("Download v0.2")
+              ><Download :size="18" />{{ t("Download v0.4")
               }}<ArrowUpRight :size="16" /></a
             ><a class="checksum" :href="`${asset}.sha256`"
               >{{ t("SHA256 checksum") }}<ArrowUpRight :size="14"
@@ -435,7 +435,7 @@ async function copy(code: string) {
         <div class="release-manifest">
           <div>
             <span>{{ t("RELEASE MANIFEST") }}</span
-            ><span class="version-tag">v0.2</span>
+            ><span class="version-tag">v0.4</span>
           </div>
           <dl>
             <div>
@@ -482,7 +482,7 @@ async function copy(code: string) {
         <p>
           {{
             t(
-              "The essentials for working with v0.2. Start here, then make it yours.",
+              "The essentials for working with v0.4. Start here, then make it yours.",
             )
           }}
         </p>
@@ -543,7 +543,7 @@ async function copy(code: string) {
     </div>
     <div class="footer-bottom">
       <span>{{ t("An independent, open-source Linux project.") }}</span
-      ><span><span class="status-dot"></span> VPS Linux v0.2</span
+      ><span><span class="status-dot"></span> VPS Linux v0.4</span
       ><a href="#">{{ t("Back to top ↑") }}</a>
     </div>
   </footer>

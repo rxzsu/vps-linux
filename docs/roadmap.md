@@ -4,7 +4,7 @@ Direction only — nothing here is scheduled, and published releases never chang
 
 ## Near term
 
-- **Publish stable v0.4** with source-bound vpsctl 0.4.0 once the full image/VM acceptance passes ([v0.4 integration](v0.4.md)).
+- **Publish stable v0.5** with source-bound vpsctl 0.5.0 (hardened sysctl/core-dump/SSH policy, man page and shell completions) once the full image/VM acceptance passes ([v0.5 integration](v0.5.md)).
 - **Scheduled CI validation**: a periodic `static-checks.sh` / `build.sh --check` run to catch drift in the live Debian repositories before a release attempt does.
 - **vpsctl diagnostics depth**: structured Docker observations and fixture-backed firewall/nftables analysis before any policy "health" claims (as already noted in `vpsctl/README.md`).
 

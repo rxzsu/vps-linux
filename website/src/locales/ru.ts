@@ -7,7 +7,7 @@ export const russian = {
   Architecture: "Архитектура",
   Documentation: "Документация",
   "Get VPS Linux": "Скачать VPS Linux",
-  "VPS Linux v0.2 is here": "Вышел VPS Linux v0.2",
+  "VPS Linux v0.4 is here": "Вышел VPS Linux v0.4",
   "Meet the release": "О релизе",
   "A SMALLER FOUNDATION. A BIGGER POSSIBILITY.":
     "МИНИМУМ ЛИШНЕГО. БОЛЬШЕ ВОЗМОЖНОСТЕЙ.",
@@ -18,7 +18,7 @@ export const russian = {
     "Лёгкий образ Linux на базе Debian для виртуальных серверов, Docker и понятной инфраструктуры.",
   "Minimal by design. Ready to build on.":
     "Минимум лишнего. Основа для твоих идей.",
-  "Download v0.2": "Скачать v0.2",
+  "Download v0.4": "Скачать v0.4",
   "Explore on GitHub": "Открыть GitHub",
   "Docker ready": "Готов к Docker",
   "LESS OVERHEAD. MORE CONTROL.": "МЕНЬШЕ НАГРУЗКИ. БОЛЬШЕ КОНТРОЛЯ.",
@@ -83,7 +83,7 @@ export const russian = {
   "Minimal by design": "Минимум лишнего",
   "Predictable by default": "Понятные настройки",
   "Yours to control": "Контроль в твоих руках",
-  "AVAILABLE NOW / v0.2": "УЖЕ ДОСТУПЕН / v0.2",
+  "AVAILABLE NOW / v0.4": "УЖЕ ДОСТУПЕН / v0.4",
   "starts with a clean slate.": "начинается с чистого листа.",
   "Get the image. Bring your ideas.": "Скачай образ. Воплоти свои идеи.",
   "8 GiB virtual disk": "виртуальный диск 8 ГиБ",
@@ -104,29 +104,29 @@ export const russian = {
   "04 / GET STARTED": "04 / ПЕРВЫЕ ШАГИ",
   "A little context.": "Немного контекста.",
   "A confident first boot.": "Уверенный первый запуск.",
-  "The essentials for working with v0.2.": "Всё необходимое для работы с v0.2.",
+  "The essentials for working with v0.4.": "Всё необходимое для работы с v0.4.",
   "Start here, then make it yours.": "Начни здесь и настрой под себя.",
   "Overview & requirements": "Обзор и требования",
-  "VPS Linux v0.2 is an independent Debian 13 (Trixie), x86_64 image. Use QEMU/KVM-compatible virtualization with UEFI support. The tested configuration is 2 vCPUs and 2 GiB RAM; the image has an 8 GiB virtual disk.":
-    "VPS Linux v0.2 — независимый образ на базе Debian 13 (Trixie) для x86_64. Нужна виртуализация, совместимая с QEMU/KVM, с поддержкой UEFI. Проверенная конфигурация: 2 vCPU и 2 ГиБ ОЗУ. Виртуальный диск образа — 8 ГиБ.",
+  "VPS Linux v0.4 is an independent Debian 13 (Trixie), x86_64 image. Use QEMU/KVM-compatible virtualization with UEFI support. The tested configuration is 2 vCPUs and 2 GiB RAM; the image has an 8 GiB virtual disk.":
+    "VPS Linux v0.4 — независимый образ на базе Debian 13 (Trixie) для x86_64. Нужна виртуализация, совместимая с QEMU/KVM, с поддержкой UEFI. Проверенная конфигурация: 2 vCPU и 2 ГиБ ОЗУ. Виртуальный диск образа — 8 ГиБ.",
   "Download & verify": "Скачивание и проверка",
-  "Download the QCOW2 image and its SHA256 file from the same v0.2 GitHub release. In the download directory, verify the image before importing it:":
-    "Скачай образ QCOW2 и файл SHA256 из одного и того же релиза v0.2 на GitHub. Перед импортом проверь образ, выполнив в папке загрузки:",
+  "Download the QCOW2 image and its SHA256 file from the same v0.4 GitHub release. In the download directory, verify the image before importing it:":
+    "Скачай образ QCOW2 и файл SHA256 из одного и того же релиза v0.4 на GitHub. Перед импортом проверь образ, выполнив в папке загрузки:",
   "Boot with QEMU/KVM": "Запуск в QEMU/KVM",
   "Import the QCOW2 disk into a QEMU/KVM virtual machine. Configure UEFI firmware, 2 virtual CPUs and 2 GiB memory. Attach your cloud-init NoCloud data source before first boot. Exact QEMU flags and firmware paths depend on the host; see the repository's testing guide for a reference command.":
     "Импортируй диск QCOW2 в виртуальную машину QEMU/KVM. Выбери прошивку UEFI, 2 виртуальных процессора и 2 ГиБ памяти. До первого запуска подключи источник данных cloud-init NoCloud. Точные параметры QEMU и пути к прошивке зависят от хоста; пример команды есть в руководстве по тестированию в репозитории.",
   "cloud-init & SSH provisioning": "Настройка cloud-init и SSH",
-  "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. The v0.2 NoCloud test provisioned the debian user with passwordless sudo. Supply your own public key before booting; no shared credentials are provided.":
-    "Передай публичный SSH-ключ через cloud-init при первом запуске. Приватный ключ оставь на своей машине. Вход по SSH с паролем и прямой вход под root отключены. В тесте NoCloud для v0.2 создавался пользователь debian с sudo без пароля. Добавь свой публичный ключ до загрузки; общих учётных данных нет.",
+  "Provide your public SSH key through cloud-init at first boot. Keep the private key on your own machine. Password SSH authentication and direct root SSH login are disabled. The v0.4 NoCloud test provisioned the debian user with passwordless sudo. Supply your own public key before booting; no shared credentials are provided.":
+    "Передай публичный SSH-ключ через cloud-init при первом запуске. Приватный ключ оставь на своей машине. Вход по SSH с паролем и прямой вход под root отключены. В тесте NoCloud для v0.4 создавался пользователь debian с sudo без пароля. Добавь свой публичный ключ до загрузки; общих учётных данных нет.",
   "Docker & Compose": "Docker и Compose",
-  "The v0.2 image includes Debian Docker Engine and Compose V2. Both docker-compose and docker compose interfaces were verified for v0.2. After login, check versions and daemon status. Docker permissions depend on the provisioned user.":
-    "В образ v0.2 включены Debian Docker Engine и Compose V2. Для v0.2 проверены оба интерфейса: docker-compose и docker compose. После входа проверь версии и состояние службы. Права доступа к Docker зависят от настройки пользователя.",
+  "The v0.4 image includes Debian Docker Engine and Compose V2. Both docker-compose and docker compose interfaces were verified for v0.4. After login, check versions and daemon status. Docker permissions depend on the provisioned user.":
+    "В образ v0.4 включены Debian Docker Engine и Compose V2. Для v0.4 проверены оба интерфейса: docker-compose и docker compose. После входа проверь версии и состояние службы. Права доступа к Docker зависят от настройки пользователя.",
   "Networking & security": "Сеть и безопасность",
   "systemd-networkd provides DHCP networking; systemd-resolved handles DNS and systemd-timesyncd handles time synchronization. SSH key authentication is a starting point: review updates, firewall rules and workload exposure for your own deployment.":
     "systemd-networkd настраивает сеть по DHCP, systemd-resolved отвечает за DNS, а systemd-timesyncd — за синхронизацию времени. Вход по SSH-ключу — только основа: проверь обновления, правила межсетевого экрана и доступность сервисов извне перед развёртыванием.",
   "Known limitations": "Известные ограничения",
-  "v0.2 uses a source-controlled, automated build system. Byte-for-byte reproducibility is not claimed, and package inputs remain moving Debian Trixie archives. Cloud providers must support custom QCOW2 import or a compatible conversion workflow. Compatibility with every provider is not guaranteed.":
-    "Версия v0.2 собирается автоматизированной системой сборки из исходников. Побайтовая воспроизводимость не гарантируется, а пакеты Debian Trixie продолжают обновляться. Облачный провайдер должен поддерживать импорт QCOW2 или совместимое преобразование. Работа у всех провайдеров не гарантируется.",
+  "v0.4 uses a source-controlled, automated build system. Byte-for-byte reproducibility is not claimed, and package inputs remain moving Debian Trixie archives. Cloud providers must support custom QCOW2 import or a compatible conversion workflow. Compatibility with every provider is not guaranteed.":
+    "Версия v0.4 собирается автоматизированной системой сборки из исходников. Побайтовая воспроизводимость не гарантируется, а пакеты Debian Trixie продолжают обновляться. Облачный провайдер должен поддерживать импорт QCOW2 или совместимое преобразование. Работа у всех провайдеров не гарантируется.",
   "Command copied": "Команда скопирована",
   "Copy command": "Скопировать команду",
   "Clipboard unavailable. Select the command to copy.":
@@ -147,14 +147,14 @@ export const russian = {
   "Site language": "Язык сайта",
   "VPS Linux — Your server. Nothing unnecessary.":
     "VPS Linux — Твой сервер. Ничего лишнего.",
-  "A lightweight Debian 13 image for QEMU/KVM, Docker workloads and clean infrastructure. Explore VPS Linux v0.2.":
-    "Лёгкий образ Debian 13 для QEMU/KVM, Docker и понятной инфраструктуры. Знакомься с VPS Linux v0.2.",
+  "A lightweight Debian 13 image for QEMU/KVM, Docker workloads and clean infrastructure. Explore VPS Linux v0.4.":
+    "Лёгкий образ Debian 13 для QEMU/KVM, Docker и понятной инфраструктуры. Знакомься с VPS Linux v0.4.",
   "A lightweight Debian-powered Linux image for virtual servers, Docker workloads, and clean infrastructure. Minimal by design. Ready to build on.":
     "Лёгкий образ Linux на базе Debian для виртуальных серверов, Docker и понятной инфраструктуры. Минимум лишнего. Основа для твоих идей.",
   "No desktop. No unnecessary layers. Just a focused set of tools for a server that feels like your own.":
     "Без рабочего стола и лишних слоёв. Только нужные инструменты для сервера, которым управляешь ты.",
   "Familiar components. Deliberate choices. A stack you can understand and make your own.":
     "Знакомые компоненты. Продуманный выбор. Стек, который легко понять и настроить под свои задачи.",
-  "The essentials for working with v0.2. Start here, then make it yours.":
-    "Всё необходимое для работы с v0.2. Начни здесь и настрой под себя.",
+  "The essentials for working with v0.4. Start here, then make it yours.":
+    "Всё необходимое для работы с v0.4. Начни здесь и настрой под себя.",
 } as const;

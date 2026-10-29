@@ -2,7 +2,7 @@
 
 v0.1 and v0.2 are published and immutable. Do not replace, retag or relabel their QCOW2/checksum assets. v0.2 was published from clean source `7d0ec202786edc037816a946146f1b40912515eb`; its acceptance and publication evidence is in [validation.md](validation.md).
 
-The next candidate in `feature/vpsctl-0.1` uses image `VERSION` = `0.4` and vpsctl `0.4.0`. See [v0.4 integration](v0.4.md). First build/test on the branch with publication disabled; publication still requires a fresh fully tested main run after merge. The release includes the source-bound vpsctl Debian package and verifies its uploaded bytes as well as the image. Earlier tags/prereleases remain unchanged. Never reuse a published stable version label for changed sources.
+The next candidate uses image `VERSION` = `0.5` and vpsctl `0.5.0`. See [v0.5 integration](v0.5.md). First build/test locally with publication disabled; publication requires a fresh fully tested main run with publish_release. Stable `v0.4` was published on 2026-10-28 from `b5bc3c5301226211dfb2c457a477c3eed8f75876`; the next stable version must be a new label. The release includes the source-bound vpsctl Debian package and verifies its uploaded bytes as well as the image. Earlier tags/prereleases remain unchanged. Never reuse a published stable version label for changed sources.
 
 Before considering the next stable release:
 

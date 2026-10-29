@@ -1,8 +1,8 @@
-# vpsctl 0.4.0
+# vpsctl 0.5.0
 
 A first-party, read-only VPS Linux control center. Rust 2024, MSRV **1.99.0**,
 Linux x86_64 / Debian 13. Utility versioning is separate from the image.
-It is included in the VPS Linux v0.4 candidate as a validated Debian package. Existing published images are unchanged.
+It targets the VPS Linux v0.5 candidate as a validated Debian package. vpsctl 0.4.0 remains installed in the published v0.4 image; existing published images are unchanged.
 
 ## Build, install and package
 
@@ -165,7 +165,7 @@ exercise navigation including Network, refresh, resize and terminal restoration.
 Package tests inspect/extract without installing; they do not prove clean-guest
 installation. The image smoke harness now runs `tests/verify-vpsctl-guest.py` for both fresh guests and after reboot; actual full VM execution must still pass before publication.
 
-Next: execute the integrated v0.4 image/guest acceptance, including non-root CLI, effective security policy and TUI restoration. Rust build tools remain outside the server image. Add structured Docker observations and fixture-backed
+Next: execute the integrated v0.5 image/guest acceptance, including non-root CLI, effective security policy and TUI restoration. Rust build tools remain outside the server image. Add structured Docker observations and fixture-backed
 firewall analysis before declaring policy health. Future configuration mutations
 need typed validation, a displayed plan, explicit confirmation, backups, atomic
 updates where feasible and tested remote-safe rollback. No mutations are implemented.

@@ -4,8 +4,9 @@
 
 | Version | Status |
 | --- | --- |
-| v0.2 (stable release) | Supported: security-relevant reports are accepted |
-| v0.4 candidate (`main` / feature branch) | Supported: reports are accepted, fixes land before publication |
+| v0.2, v0.3 (stable releases) | Supported: security-relevant reports are accepted |
+| v0.4 (stable release) | Supported: security-relevant reports are accepted |
+| v0.5 candidate (`main`) | Supported: reports are accepted, fixes land before publication |
 | v0.1, older tags | Not supported; assets remain frozen for provenance |
 
 ## Reporting a vulnerability

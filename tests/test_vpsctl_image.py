@@ -1,4 +1,4 @@
-"""Actual Debian package validation and v0.4 bundle coverage, without root."""
+"""Actual Debian package validation and v0.5 bundle coverage, without root."""
 import hashlib
 import importlib.util
 import json
@@ -24,7 +24,7 @@ class VpsctlImage(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.commit = 'a' * 40
-        self.version = '0.4.0'
+        self.version = '0.5.0'
         self.tree = self.root / 'tree'
         (self.tree / 'DEBIAN').mkdir(parents=True)
         (self.tree / 'usr/bin').mkdir(parents=True)
@@ -41,7 +41,7 @@ class VpsctlImage(unittest.TestCase):
         for name in ('usr/share/man/man1/vpsctl.1.gz', 'usr/share/bash-completion/completions/vpsctl',
                      'usr/share/zsh/vendor-completions/_vpsctl'):
             (self.tree / name).write_text('fixture\n')
-        self.package = self.root / 'vpsctl_0.4.0_amd64.deb'
+        self.package = self.root / 'vpsctl_0.5.0_amd64.deb'
         self.pack()
 
     def pack(self):
@@ -61,7 +61,7 @@ class VpsctlImage(unittest.TestCase):
         self.assertEqual(info['package_file'], self.package.name)
 
     def test_stale_dirty_and_wrong_version_packages_are_rejected(self):
-        for field, old, new in [('commit', self.commit, 'b' * 40), ('dirty', 'false', 'true'), ('version', '0.4.0', '0.2.0')]:
+        for field, old, new in [('commit', self.commit, 'b' * 40), ('dirty', 'false', 'true'), ('version', '0.5.0', '0.2.0')]:
             with self.subTest(field=field):
                 (self.tree / 'DEBIAN/control').write_text(self.control.replace(old, new))
                 self.pack()
@@ -93,15 +93,15 @@ class VpsctlImage(unittest.TestCase):
             validate(link, self.version, self.commit)
 
     def bundle(self):
-        image = self.root / 'vps-linux-v0.4.qcow2'
+        image = self.root / 'vps-linux-v0.5.qcow2'
         subprocess.run(['qemu-img', 'create', '-f', 'qcow2', str(image), '8G'], check=True, capture_output=True)
         image_hash = hashlib.sha256(image.read_bytes()).hexdigest()
         (self.root / (image.name + '.sha256')).write_text(f'{image_hash}  {image.name}\n')
-        manifest = b'libc6\t2.41\tamd64\nvpsctl\t0.4.0\tamd64\n'
+        manifest = b'libc6\t2.41\tamd64\nvpsctl\t0.5.0\tamd64\n'
         (self.root / 'packages.tsv').write_bytes(manifest)
-        metadata = {'version': '0.4', 'source_commit': self.commit, 'created_utc': '2026-10-29T00:00:00+00:00', 'image_sha256': image_hash, 'package_manifest_sha256': hashlib.sha256(manifest).hexdigest(), 'vpsctl': validate(self.package, self.version, self.commit)}
+        metadata = {'version': '0.5', 'source_commit': self.commit, 'created_utc': '2026-10-29T00:00:00+00:00', 'image_sha256': image_hash, 'package_manifest_sha256': hashlib.sha256(manifest).hexdigest(), 'vpsctl': validate(self.package, self.version, self.commit)}
         (self.root / 'build.json').write_text(json.dumps(metadata))
-        (self.root / 'sbom.spdx.json').write_text(json.dumps(generate(manifest, '0.4', self.commit, metadata['created_utc'])))
+        (self.root / 'sbom.spdx.json').write_text(json.dumps(generate(manifest, '0.5', self.commit, metadata['created_utc'])))
         self.files = [image.name, image.name + '.sha256', 'packages.tsv', 'build.json', 'sbom.spdx.json', self.package.name]
         self.rehash()
         return image, metadata
@@ -128,7 +128,7 @@ class VpsctlImage(unittest.TestCase):
 
     def test_manifest_cannot_claim_a_different_installed_utility(self):
         _, metadata = self.bundle()
-        manifest = (self.root / 'packages.tsv').read_bytes().replace(b'0.4.0', b'0.2.0')
+        manifest = (self.root / 'packages.tsv').read_bytes().replace(b'0.5.0', b'0.2.0')
         (self.root / 'packages.tsv').write_bytes(manifest)
         metadata['package_manifest_sha256'] = hashlib.sha256(manifest).hexdigest()
         (self.root / 'build.json').write_text(json.dumps(metadata))
